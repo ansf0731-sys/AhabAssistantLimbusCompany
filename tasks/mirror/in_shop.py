@@ -1212,9 +1212,10 @@ class Shop:
         self.fuse_aggressive_switch = False
         log.info("合成四级，切换到非激进模式")
 
-    def _replace_selected_skill(self):
+    def _replace_selected_skill(self, mode_override=None):
         """按配置顺序尝试技能替换；每次重新识别，避免购买后点击旧坐标。"""
-        modes = {3: (1, 0), 4: (0, 1)}.get(self.skill_replacement_mode, (self.skill_replacement_mode,))
+        selected_mode = self.skill_replacement_mode if mode_override is None else mode_override
+        modes = {3: (1, 0), 4: (0, 1)}.get(selected_mode, (selected_mode,))
         for mode in modes:
             if mode not in (0, 1, 2):
                 return
