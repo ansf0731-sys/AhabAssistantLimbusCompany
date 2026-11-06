@@ -24,8 +24,15 @@ class Shop:
                 continue
             if getattr(team_setting, f"system_{system}", False):
                 self.shop_sell_list.append(system)
-        self.fuse_switch = False if team_setting.shop_strategy == 0 else True  # 是否启动合成模式
-        self.fuse_aggressive_switch = True if team_setting.shop_strategy == 2 else False  # 是否启动激进合成模式
+        # 黎明黑兽攻略需要沿用AALC现有商店合成流程。若用户未选择商店策略（默认“出售”），
+        # 预设将默认策略提升为普通合成；用户显式选择的“合成/四级优先”策略保持不变。
+        self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset
+        shop_strategy = team_setting.shop_strategy
+        if self.dawn_black_beast_preset and shop_strategy == 0:
+            shop_strategy = 1
+            log.info("黎明黑兽预设：默认商店策略由出售切换为普通合成，复用AALC原有购买/合成/强化流程")
+        self.fuse_switch = False if shop_strategy == 0 else True  # 是否启动合成模式
+        self.fuse_aggressive_switch = True if shop_strategy == 2 else False  # 是否启动激进合成模式
         self.do_not_heal = team_setting.do_not_heal  # 是否不治疗
         self.do_not_buy = team_setting.do_not_buy  # 是否不购买
         self.do_not_fuse = team_setting.do_not_fuse  # 是否不合成
