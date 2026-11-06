@@ -38,3 +38,34 @@ def test_dawn_black_beast_floor_keywords_exist_in_catalog() -> None:
         missing_en = set(en_targets) - set(catalog[en_section])
         assert not missing_zh, f"Floor {floor} Chinese keywords missing: {sorted(missing_zh)}"
         assert not missing_en, f"Floor {floor} English keywords missing: {sorted(missing_en)}"
+
+
+
+def test_dawn_black_beast_skill_modes_follow_floor_and_sinner() -> None:
+    shop_path = ROOT / "tasks" / "mirror" / "in_shop.py"
+    tree = ast.parse(shop_path.read_text(encoding="utf-8"))
+    shop_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Shop")
+    method = next(
+        node
+        for node in shop_class.body
+        if isinstance(node, ast.FunctionDef) and node.name == "_dawn_black_beast_skill_mode"
+    )
+    isolated = ast.Module(body=[method], type_ignores=[])
+    namespace: dict[str, object] = {}
+    exec(compile(ast.fix_missing_locations(isolated), str(shop_path), "exec"), namespace)
+    choose_mode = namespace["_dawn_black_beast_skill_mode"]
+
+    class FakeShop:
+        current_layer = 1
+
+    shop = FakeShop()
+    for floor in (1, 2):
+        shop.current_layer = floor
+        assert choose_mode(shop, "Faust") == 2
+        assert choose_mode(shop, "Sinclair") == 2
+    for floor in (3, 4, 5):
+        shop.current_layer = floor
+        assert choose_mode(shop, "Faust") == 0
+        assert choose_mode(shop, "Sinclair") == 0
+    assert choose_mode(shop, "Outis") == 1
+    assert choose_mode(shop, "Gregor") == 0
