@@ -120,7 +120,7 @@ class Shop:
                 auto.model = "aggressive"
             if loop_count < 0:
                 log.error("无法升级ego饰品")
-                break
+                return False
 
     def buy_gifts(self):
         def sort_points(points, complete=0, threshold=40):
