@@ -56,8 +56,12 @@ class Mirror:
         self.system = all_systems[team_setting.team_system]  # 选择的体系
         self.avoid_skill_3 = team_setting.avoid_skill_3  # 是否避免使用3技能
         self.prioritize_skill_3 = team_setting.prioritize_skill_3  # 是否优先使用3技能
-        # 开局星光加成
-        self.opening_bonus = team_setting.opening_bonus
+        # 开局星光加成；攻略固定选择第1、3、10项，其他队伍仍沿用原设置。
+        self.opening_bonus = (
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1]
+            if team_setting.dawn_black_beast_preset
+            else team_setting.opening_bonus
+        )
         self.use_starlight = team_setting.use_starlight
         # 自选奖励卡优先度
         self.reward_cards = team_setting.reward_cards
