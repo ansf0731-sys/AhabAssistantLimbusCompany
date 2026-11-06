@@ -828,13 +828,13 @@ class Shop:
                         auto.find_language_text(["快感"], ["Enrapturing Trance"], all_text=True)
                     )
                     auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png")
+                    sleep(0.5)
+                    auto.click_element(
+                        "mirror/road_in_mir/ego_gift_get_confirm_assets.png",
+                        take_screenshot=True,
+                    )
                     if target_enrapturing_trance:
                         log.info("黎明黑兽预设：已识别到目标四级破裂饰品“快感”")
-                        sleep(0.5)
-                        auto.click_element(
-                            "mirror/road_in_mir/ego_gift_get_confirm_assets.png",
-                            take_screenshot=True,
-                        )
                         return
                     break
 
