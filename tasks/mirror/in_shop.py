@@ -67,9 +67,10 @@ class Shop:
         self.second_system_setting = team_setting.second_system_setting
         self.second_system_action = team_setting.second_system_action
         # 技能替换
-        self.skill_replacement = team_setting.skill_replacement
-        self.skill_replacement_select = team_setting.skill_replacement_select
+        self.skill_replacement = True if self.dawn_black_beast_preset else team_setting.skill_replacement
+        self.skill_replacement_select = 3 if self.dawn_black_beast_preset else team_setting.skill_replacement_select
         self.skill_replacement_mode = team_setting.skill_replacement_mode
+        self.current_layer = 0
         self.max_keyword_refresh = team_setting.max_keyword_refresh
         self.max_normal_refresh = team_setting.max_normal_refresh
         self.ignore_shop = team_setting.ignore_shop  # 忽略的商店楼层
