@@ -722,6 +722,22 @@ class Shop:
         while True:
             if list_block := auto.find_element("mirror/shop/gifts_list_block.png", take_screenshot=True):
                 auto.mouse_drag(list_block[0], list_block[1], drag_time=1, dy=-500)
+            if self.dawn_black_beast_preset:
+                # 先检查当前可见库存；已拥有的目标不再重复追求，也不作为合成素材。
+                for target_name, names_zh, names_en in [
+                    ("快感", ["快感"], ["Enrapturing Trance"]),
+                    ("干巴柴涩鸡胸肉", ["干巴柴涩鸡胸肉", "鸡胸肉"], ["Chicken Breast"]),
+                    ("雷击木", ["雷击木"], ["Thunder Branch"]),
+                ]:
+                    if target_name not in self.dawn_black_beast_found and auto.find_language_text(
+                        names_zh, names_en, all_text=True
+                    ):
+                        self.dawn_black_beast_found.add(target_name)
+                        log.info(f"黎明黑兽预设：库存中已识别目标饰品“{target_name}”")
+                if {"快感", "干巴柴涩鸡胸肉", "雷击木"}.issubset(self.dawn_black_beast_found):
+                    log.info("黎明黑兽预设：破裂随机合成的三件目标饰品均已获得")
+                    auto.mouse_click_blank(times=3)
+                    return
             points = auto.find_element(
                 "mirror/shop/fuse_label.png",
                 find_type="image_with_multiple_targets",
