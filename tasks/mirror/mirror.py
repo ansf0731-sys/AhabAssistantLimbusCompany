@@ -76,7 +76,7 @@ class Mirror:
         self.opening_items_system = team_setting.opening_items_system
         self.re_formation_each_floor = team_setting.re_formation_each_floor  # 是否每层重新配队
         # 攻略要求第五层进入困难模式；只覆盖本次运行，不修改已保存的队伍设置。
-        self.normal_to_hard_floor = 5 if self.dawn_black_beast_preset else team_setting.normal_to_hard_floor
+        self.normal_to_hard_floor = 5 if team_setting.dawn_black_beast_preset else team_setting.normal_to_hard_floor
         # 第二体系
         self.second_system = team_setting.second_system  # 启用第二体系
         self.second_system_select = team_setting.second_system_select  # 选择的第二体系
