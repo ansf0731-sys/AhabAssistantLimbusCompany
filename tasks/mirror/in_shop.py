@@ -27,10 +27,9 @@ class Shop:
         # 黎明黑兽攻略需要沿用AALC现有商店合成流程。若用户未选择商店策略（默认“出售”），
         # 预设将默认策略提升为普通合成；用户显式选择的“合成/四级优先”策略保持不变。
         self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset
-        shop_strategy = team_setting.shop_strategy
-        if self.dawn_black_beast_preset and shop_strategy == 0:
-            shop_strategy = 1
-            log.info("黎明黑兽预设：默认商店策略由出售切换为普通合成，复用AALC原有购买/合成/强化流程")
+        shop_strategy = 1 if self.dawn_black_beast_preset else team_setting.shop_strategy
+        if self.dawn_black_beast_preset:
+            log.info("黎明黑兽预设：本次运行固定使用普通合成，避免激进合成误消耗目标饰品")
         self.fuse_switch = False if shop_strategy == 0 else True  # 是否启动合成模式
         self.fuse_aggressive_switch = True if shop_strategy == 2 else False  # 是否启动激进合成模式
         # 预设必须完成攻略所需的购买、普通合成、体系公式合成和强化；
@@ -56,13 +55,13 @@ class Shop:
         self.do_not_heal = team_setting.do_not_heal  # 是否不治疗
         self.aggressive_save_systems = team_setting.aggressive_save_systems  # 激进合成期间保护本体系饰品
         # 是否在合成四级后改变行动策略
-        self.after_level_IV = team_setting.after_level_IV
+        self.after_level_IV = False if self.dawn_black_beast_preset else team_setting.after_level_IV
         self.after_level_IV_select = team_setting.after_level_IV_select
         # 是否自定义商店购物策略
         self.shopping_strategy = False if self.dawn_black_beast_preset else team_setting.shopping_strategy
         self.shopping_strategy_select = team_setting.shopping_strategy_select
         # 是否启用第二体系
-        self.second_system = team_setting.second_system
+        self.second_system = False if self.dawn_black_beast_preset else team_setting.second_system
         self.second_system_select = all_systems[team_setting.second_system_select]
         self.second_system_setting = team_setting.second_system_setting
         self.second_system_action = team_setting.second_system_action
@@ -75,7 +74,7 @@ class Shop:
         self.max_normal_refresh = team_setting.max_normal_refresh
         self.ignore_shop = team_setting.ignore_shop  # 忽略的商店楼层
 
-        self.aggressive_also_enhance = team_setting.aggressive_also_enhance  # 激进合成期间也升级饰品
+        self.aggressive_also_enhance = False if self.dawn_black_beast_preset else team_setting.aggressive_also_enhance  # 激进合成期间也升级饰品
 
         self.fuse_IV = False
         self.fuse_second_IV = False
