@@ -47,7 +47,7 @@ The existing fifth-floor event-pack settings are deliberately preserved:
 
 - When `select_event_pack` is enabled, the existing special handler still selects the leftmost event pack before ordinary priority matching.
 - When `skip_event_pack` is enabled, the existing selector still excludes the leftmost event pack and evaluates the remaining packs.
-- Otherwise, the normal OCR/weight selector runs with the fifth-floor `转困牢 2号线 / line` priority when that keyword exists in the active difficulty's pack list.
+- Otherwise, the normal OCR/weight selector runs with the fifth-floor `转困牢 2号线 / line` priority. The preset also registers these as in-memory OCR keywords when the active normal-mode catalog omits them, so a visible fifth-floor 2号线 pack can still be recognized; if no such pack is present on screen, ordinary weights remain the fallback.
 
 The preset is opt-in and does not change other teams or the default selection behavior.
 
