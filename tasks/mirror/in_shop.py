@@ -24,8 +24,7 @@ class Shop:
                 continue
             if getattr(team_setting, f"system_{system}", False):
                 self.shop_sell_list.append(system)
-        # 黎明黑兽攻略需要沿用AALC现有商店合成流程。若用户未选择商店策略（默认“出售”），
-        # 预设将默认策略提升为普通合成；用户显式选择的“合成/四级优先”策略保持不变。
+        # 黎明黑兽攻略强制采用AALC现有普通合成流程，避免用户保存的激进策略影响目标饰品。
         self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset
         shop_strategy = 1 if self.dawn_black_beast_preset else team_setting.shop_strategy
         if self.dawn_black_beast_preset:
