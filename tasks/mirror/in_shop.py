@@ -90,6 +90,7 @@ class Shop:
         self.first_gift_enhance = False
         # 记录本次运行中通过破裂体系随机合成确认获得的攻略目标。
         self.dawn_black_beast_found = set()
+        self.dawn_black_beast_enhanced = set()
 
     class RestartGame(Exception):
         pass
@@ -1228,6 +1229,32 @@ class Shop:
                 continue
 
             next_gift = True
+
+            # 攻略指定饰品可能来自不同体系，不能只依赖当前破裂体系图标模板。
+            # 复用 AALC 现有强化按钮，对五件指定饰品逐件尝试强化；坐标记录避免同一轮反复点击。
+            if self.dawn_black_beast_preset:
+                dawn_targets = [
+                    ("成捆的符咒", ["成捆的符咒"], ["Talisman Bundle", "Bundle of Talismans"]),
+                    ("标准负载电池", ["标准负载电池"], ["Standard-duty Battery", "Standard Duty Battery"]),
+                    ("干巴柴涩鸡胸肉", ["干巴柴涩鸡胸肉", "鸡胸肉"], ["Chicken Breast"]),
+                    ("雷击木", ["雷击木"], ["Thunder Branch"]),
+                    ("快感", ["快感"], ["Enrapturing Trance"]),
+                ]
+                for target_name, names_zh, names_en in dawn_targets:
+                    if target_name in self.dawn_black_beast_enhanced:
+                        continue
+                    target_pos = auto.find_language_text(names_zh, names_en, all_text=True)
+                    if target_pos:
+                        auto.mouse_click(target_pos[0], target_pos[1])
+                        if self.ego_gift_to_power_up() is False:
+                            break
+                        self.dawn_black_beast_enhanced.add(target_name)
+                        log.info(f"黎明黑兽预设：已对目标饰品“{target_name}”执行一次AALC强化操作")
+                        next_gift = False
+                        break
+
+            if next_gift is False:
+                break
 
             # 升级本体系四级
             if not system_level_IV:
