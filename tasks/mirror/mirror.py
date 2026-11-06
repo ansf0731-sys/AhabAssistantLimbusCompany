@@ -48,6 +48,10 @@ def to_log_with_time(msg, elapsed_time):
 class Mirror:
     def __init__(self, team_setting: TeamSetting, team_num: int):
         team_setting = team_setting.model_copy(deep=True)  # 避免修改原始配置
+        # 黎明黑兽攻略是破裂体系；预设启用时统一使用破裂体系驱动战斗与商店逻辑。
+        if team_setting.dawn_black_beast_preset:
+            team_setting.team_system = 3
+            log.info("黎明黑兽预设：本次运行锁定破裂体系")
         self.logger = log
         self.team_order = team_num
         self.sinner_team = team_setting.sinner_order  # 选择的罪人序列
