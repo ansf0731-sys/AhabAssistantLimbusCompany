@@ -823,11 +823,19 @@ class Shop:
 
                 auto.mouse_to_blank()
 
-                if auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png"):
-                    if self.dawn_black_beast_preset and auto.find_language_text(
-                        ["快感"], ["Enrapturing Trance"], all_text=True
-                    ):
+                if auto.find_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png"):
+                    target_enrapturing_trance = self.dawn_black_beast_preset and bool(
+                        auto.find_language_text(["快感"], ["Enrapturing Trance"], all_text=True)
+                    )
+                    auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png")
+                    if target_enrapturing_trance:
                         log.info("黎明黑兽预设：已识别到目标四级破裂饰品“快感”")
+                        sleep(0.5)
+                        auto.click_element(
+                            "mirror/road_in_mir/ego_gift_get_confirm_assets.png",
+                            take_screenshot=True,
+                        )
+                        return
                     break
 
                 if auto.click_element(
