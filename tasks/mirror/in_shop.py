@@ -24,6 +24,9 @@ class Shop:
                 continue
             if getattr(team_setting, f"system_{system}", False):
                 self.shop_sell_list.append(system)
+        if team_setting.dawn_black_beast_preset:
+            # 攻略的两个四级斩击饰品是可选补充项，不能被旧队伍的“舍弃体系”设置误合成。
+            self.shop_sell_list = []
         # 黎明黑兽攻略强制采用AALC现有普通合成流程，避免用户保存的激进策略影响目标饰品。
         self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset
         shop_strategy = 1 if self.dawn_black_beast_preset else team_setting.shop_strategy
