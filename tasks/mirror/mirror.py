@@ -483,7 +483,17 @@ class Mirror:
 
             # 选择奖励卡
             if auto.find_element("mirror/road_in_mir/select_encounter_reward_card_assets.png"):
-                if self.reward_cards:
+                if self.dawn_black_beast_preset and self.floor == 1:
+                    get_reward_card(
+                        self.reward_cards_select if self.reward_cards else 0,
+                        target_gifts=["成捆的符咒", "Talisman Bundle", "Bundle of Talismans"],
+                    )
+                elif self.dawn_black_beast_preset and self.floor == 2:
+                    get_reward_card(
+                        self.reward_cards_select if self.reward_cards else 0,
+                        target_gifts=["干巴柴涩鸡胸肉", "鸡胸肉", "Chicken Breast"],
+                    )
+                elif self.reward_cards:
                     get_reward_card(self.reward_cards_select)
                 else:
                     get_reward_card()
