@@ -88,6 +88,8 @@ class Shop:
         # 用于记录已升级的ego饰品
         self.enhance_gifts_list = []
         self.first_gift_enhance = False
+        # 记录本次运行中通过破裂体系随机合成确认获得的攻略目标。
+        self.dawn_black_beast_found = set()
 
     class RestartGame(Exception):
         pass
@@ -761,35 +763,25 @@ class Shop:
                     for gift_pos in all_system_gift:
                         if gift_pos[1] >= dividing_line:
                             continue
-                        # 等级徽记位于饰品卡片附近；用窄裁切避免把相邻卡片的等级算进来。
                         gift_crop = (
                             max(0, gift_pos[0] - 75),
                             max(0, gift_pos[1] - 75),
                             gift_pos[0] + 75,
                             gift_pos[1] + 75,
                         )
-                        # 必须保留攻略的五件目标饰品；若名称在当前卡片/悬浮信息中可识别，
-                        # 即使等级合格也不能拿去合成。
                         protected_gift = auto.find_language_text(
                             [
-                                "成捆的符咒",
-                                "标准负载电池",
-                                "干巴柴涩鸡胸肉",
-                                "鸡胸肉",
-                                "雷击木",
-                                "快感",
+                                "成捆的符咒", "标准负载电池", "干巴柴涩鸡胸肉",
+                                "鸡胸肉", "雷击木", "快感",
                             ],
                             [
-                                "Talisman Bundle",
-                                "Standard-duty Battery",
-                                "Chicken Breast",
-                                "Thunder Branch",
-                                "Enrapturing Trance",
+                                "Talisman Bundle", "Standard-duty Battery",
+                                "Chicken Breast", "Thunder Branch", "Enrapturing Trance",
                             ],
                             gift_crop,
                         )
                         if protected_gift:
-                            log.debug(f"黎明黑兽预设：保护目标饰品，不作为合成素材：{protected_gift}")
+                            log.debug(f"黎明黑兽预设：保护目标饰品，不作为随机合成素材：{protected_gift}")
                             continue
                         if auto.find_element(
                             "mirror/road_to_mir/observe_ego_gift/Level_III.png",
@@ -803,17 +795,24 @@ class Shop:
                             threshold=0.72,
                         ):
                             level_II.append(gift_pos)
+
                     level_III.sort(key=lambda pos: (pos[1], pos[0]))
                     level_II.sort(key=lambda pos: (pos[1], pos[0]))
-                    if len(level_III) >= 3:
+                    missing_level_III_targets = {
+                        "干巴柴涩鸡胸肉", "雷击木"
+                    } - self.dawn_black_beast_found
+                    if missing_level_III_targets and len(level_II) >= 3:
+                        # 三级目标（鸡胸肉、雷击木）由破裂体系随机产出，不指定素材配方。
+                        fusion_pos = level_II[:3]
+                        log.info("黎明黑兽预设：尝试随机合成破裂三级饰品，目标剩余：" + "、".join(sorted(missing_level_III_targets)))
+                    elif len(level_III) >= 3:
                         fusion_pos = level_III[:3]
                     elif len(level_III) >= 2 and len(level_II) >= 1:
                         fusion_pos = level_III[:2] + level_II[:1]
                     else:
                         log.debug(
-                            "黎明黑兽预设：破裂体系可用素材不足，需3个III级或2个III级+1个II级饰品"
-                        )
-                else:
+                            "黎明黑兽预设：当前素材不足，三级目标需3个II级素材；快感目标需3个III级或2个III级+1个II级素材"
+                        )                else:
                     if len(all_system_gift) > 0:
                         for gift_pos in all_system_gift:
                             if gift_pos[1] < dividing_line:
@@ -847,9 +846,20 @@ class Shop:
                 auto.mouse_to_blank()
 
                 if auto.find_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png"):
-                    target_enrapturing_trance = self.dawn_black_beast_preset and bool(
-                        auto.find_language_text(["快感"], ["Enrapturing Trance"], all_text=True)
-                    )
+                    target_gift = None
+                    if self.dawn_black_beast_preset:
+                        result_names = [
+                            ("快感", ["快感"], ["Enrapturing Trance"]),
+                            ("干巴柴涩鸡胸肉", ["干巴柴涩鸡胸肉", "鸡胸肉"], ["Chicken Breast"]),
+                            ("雷击木", ["雷击木"], ["Thunder Branch"]),
+                        ]
+                        for target_name, names_zh, names_en in result_names:
+                            if auto.find_language_text(names_zh, names_en, all_text=True):
+                                target_gift = target_name
+                                self.dawn_black_beast_found.add(target_name)
+                                log.info(f"黎明黑兽预设：随机合成结果已识别目标饰品“{target_name}”")
+                                break
+                    target_enrapturing_trance = target_gift == "快感"
                     auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png")
                     sleep(0.5)
                     auto.click_element(
