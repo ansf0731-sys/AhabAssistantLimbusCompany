@@ -1282,6 +1282,18 @@ class Mirror:
             if auto.find_element("mirror/road_in_mir/legend_assets.png"):
                 break
 
+            # 黎明黑兽预设：第二层事件若直接显示鸡胸肉奖励，优先点击该奖励选项。
+            if self.dawn_black_beast_preset and self.floor == 2:
+                chicken_reward = auto.find_language_text(
+                    ["干巴柴涩鸡胸肉", "鸡胸肉"],
+                    ["Chicken Breast"],
+                )
+                if chicken_reward:
+                    auto.mouse_click(chicken_reward[0], chicken_reward[1])
+                    log.info("黎明黑兽预设：第二层事件识别到鸡胸肉奖励，优先选择")
+                    event_chance -= 1
+                    continue
+
             if event_chance == 0:
                 if key_word_position := auto.find_language_text("判定", "check"):
                     auto.mouse_action_with_pos(key_word_position, offset=False)
@@ -1323,18 +1335,6 @@ class Mirror:
                     for coordinate in coordinates:
                         auto.mouse_click(coordinate[0], coordinate[1])
                     retry()
-
-            # 黎明黑兽预设：第二层事件若直接显示鸡胸肉奖励，优先点击该奖励选项。
-            if self.dawn_black_beast_preset and self.floor == 2:
-                chicken_reward = auto.find_language_text(
-                    ["干巴柴涩鸡胸肉", "鸡胸肉"],
-                    ["Chicken Breast"],
-                )
-                if chicken_reward:
-                    auto.mouse_click(chicken_reward[0], chicken_reward[1])
-                    log.info("黎明黑兽预设：第二层事件识别到鸡胸肉奖励，优先选择")
-                    event_chance -= 1
-                    continue
 
             # 针对不同事件进行处理，优先选直接获取的，再选需要判定的，再选后续事件的，最后第一个事项
             if auto.click_element("event/unknown_event.png"):
