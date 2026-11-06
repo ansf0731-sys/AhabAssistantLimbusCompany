@@ -72,7 +72,7 @@ class Shop:
         self.current_layer = 0
         self.max_keyword_refresh = team_setting.max_keyword_refresh
         self.max_normal_refresh = team_setting.max_normal_refresh
-        self.ignore_shop = team_setting.ignore_shop  # 忽略的商店楼层
+        self.ignore_shop = [False] * 5 if self.dawn_black_beast_preset else team_setting.ignore_shop  # 攻略预设不跳过必要商店
 
         self.aggressive_also_enhance = False if self.dawn_black_beast_preset else team_setting.aggressive_also_enhance  # 激进合成期间也升级饰品
 
