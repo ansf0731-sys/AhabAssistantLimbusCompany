@@ -69,3 +69,23 @@ def test_dawn_black_beast_skill_modes_follow_floor_and_sinner() -> None:
         assert choose_mode(shop, "Sinclair") == 0
     assert choose_mode(shop, "Outis") == 1
     assert choose_mode(shop, "Gregor") == 0
+
+
+
+def test_dawn_black_beast_preset_switches_to_hard_mode_on_floor_five() -> None:
+    mirror_path = ROOT / "tasks" / "mirror" / "mirror.py"
+    tree = ast.parse(mirror_path.read_text(encoding="utf-8"))
+    mirror_class = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Mirror")
+    assignment = next(
+        node
+        for node in ast.walk(mirror_class)
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Attribute)
+            and target.attr == "normal_to_hard_floor"
+            for target in node.targets
+        )
+    )
+    assert ast.unparse(assignment.value) == (
+        "5 if team_setting.dawn_black_beast_preset else team_setting.normal_to_hard_floor"
+    )
