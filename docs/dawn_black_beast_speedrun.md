@@ -20,4 +20,4 @@ The existing fifth-floor event-pack settings are deliberately preserved:
 - When `skip_event_pack` is enabled, the existing selector still excludes the leftmost event pack and evaluates the remaining packs.
 - Otherwise, the normal OCR/weight selector runs with the fifth-floor `号线 / line` priority when that keyword exists in the active difficulty's pack list.
 
-The preset is opt-in and does not change other teams or the default selection behavior.
+The preset also selects the first-level star bonuses at positions 1, 3, and 10 for this run. It does not modify the saved team configuration. The preset is opt-in and does not change other teams or the default selection behavior.
