@@ -935,6 +935,12 @@ class CustomizeSettingsModule(QFrame):
         )
         self.select_theme_pack_weight_button = PushButton(self.tr("权重选择"))
 
+        self.dawn_black_beast_preset = BaseCheckBox(
+            "dawn_black_beast_preset",
+            None,
+            QT_TRANSLATE_NOOP("BaseCheckBox", "黎明黑兽速刷预设（逐层卡包优先级）"),
+        )
+
         self.use_team_code = BaseCheckBox(
             "use_team_code",
             None,
@@ -1028,6 +1034,7 @@ class CustomizeSettingsModule(QFrame):
         self.tenth_line.addWidget(self.select_theme_pack_weight_button)
         self.tenth_line.addStretch()
 
+        self.eleventh_line.addWidget(self.dawn_black_beast_preset)
         self.eleventh_line.addWidget(self.use_team_code)
         self.eleventh_line.addWidget(self.team_code_warning)
         self.eleventh_line.addWidget(self.team_code_input)
@@ -1110,6 +1117,7 @@ class CustomizeSettingsModule(QFrame):
         self.max_normal_refresh.retranslateUi()
         self.use_custom_theme_pack_weight.retranslateUi()
         self.select_theme_pack_weight_button.setText(self.tr("权重选择"))
+        self.dawn_black_beast_preset.retranslateUi()
         self.use_team_code.retranslateUi()
 
         self.max_keyword_refresh.setToolTip(self.tr("每次商店访问时定向刷新商品的次数上限"))
