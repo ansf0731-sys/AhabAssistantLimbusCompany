@@ -186,6 +186,9 @@ class TeamSetting(BaseModel):
     use_custom_theme_pack_weight: bool = False
     """启用队伍自定义主题包权重"""
 
+    dawn_black_beast_preset: bool = False
+    """黎明黑兽速刷攻略预设：按楼层优先选择指定主题包"""
+
     use_team_code: bool = False
     """是否使用编队码自动组队"""
 
