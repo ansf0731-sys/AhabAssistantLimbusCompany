@@ -1243,7 +1243,7 @@ class Shop:
                 for target_name, names_zh, names_en in dawn_targets:
                     if target_name in self.dawn_black_beast_enhanced:
                         continue
-                    target_pos = auto.find_language_text(names_zh, names_en, all_text=True)
+                    target_pos = auto.find_language_text(names_zh, names_en)
                     if target_pos:
                         auto.mouse_click(target_pos[0], target_pos[1])
                         if self.ego_gift_to_power_up() is False:
