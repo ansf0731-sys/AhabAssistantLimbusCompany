@@ -33,7 +33,13 @@ def switch_theme_pack_difficulty(hard_mode=False):
 
 @begin_and_finish_time_log(task_name="选择镜牢主题包")
 # 选择镜牢主题包
-def select_theme_pack(hard_mode=False, floor=None, team_num=None, use_custom_theme_pack_weight=False):
+def select_theme_pack(
+    hard_mode=False,
+    floor=None,
+    team_num=None,
+    use_custom_theme_pack_weight=False,
+    dawn_black_beast_preset=False,
+):
     loop_count = 30
     auto.model = "clam"
     scale = cfg.set_win_size / 1080
@@ -54,6 +60,32 @@ def select_theme_pack(hard_mode=False, floor=None, team_num=None, use_custom_the
         theme_pack_list_en = theme_list.get_effective_theme_pack_list(
             hard_mode, "en", team_num, use_custom_theme_pack_weight
         )
+    # 黎明黑兽速刷攻略：按楼层覆盖目标主题包权重，不改动用户保存的全局/队伍权重。
+    # 五层活动卡包的既有处理优先保留：select_event_pack 仍然优先选活动包，
+    # skip_event_pack 仍然会在后续扫描时排除最左侧活动包。
+    if dawn_black_beast_preset and floor in (1, 2, 3, 4, 5):
+        floor_targets = {
+            1: ({"赌徒": 100, "遗忘": 100}, {"gambl": 100, "forgot": 100}),
+            2: ({"地狱鸡": 100}, {"chick": 100}),
+            3: ({"当斩": 100}, {"cleaved": 100}),
+            4: ({"绝望": 100}, {"Hatred": 100}),
+            5: ({"号线": 100}, {"line": 100}),
+        }
+        zh_targets, en_targets = floor_targets[floor]
+        applied = []
+        for key, value in zh_targets.items():
+            if key in theme_pack_list_zh:
+                theme_pack_list_zh[key] = value
+                applied.append(key)
+        for key, value in en_targets.items():
+            if key in theme_pack_list_en:
+                theme_pack_list_en[key] = value
+                applied.append(key)
+        if applied:
+            log.info(f"黎明黑兽预设：第{floor}层主题包目标优先级已启用：{', '.join(applied)}")
+        else:
+            log.warning(f"黎明黑兽预设：第{floor}层未找到本语言对应的目标主题包关键词，沿用默认权重")
+
     # 游戏更新后新增的主题包尚未收录时的兜底权重，取自「未知 / unknown」配置项
     unknown_weight = int(theme_pack_list_zh.get("未知", theme_pack_list_en.get("unknown", -5)))
     refresh_times = 3
