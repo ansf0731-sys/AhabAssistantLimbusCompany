@@ -606,6 +606,36 @@ class Shop:
                         gift_list.append(gift)
             # 对饰品位置列表进行排序、去重处理
             my_list = processing_coordinates(gift_list)
+            if self.dawn_black_beast_preset and my_list:
+                protected_positions = []
+                for gift_pos in my_list:
+                    gift_crop = (
+                        max(0, gift_pos[0] - 90),
+                        max(0, gift_pos[1] - 90),
+                        gift_pos[0] + 90,
+                        gift_pos[1] + 90,
+                    )
+                    if auto.find_language_text(
+                        [
+                            "成捆的符咒", "标准负载电池", "干巴柴涩鸡胸肉",
+                            "鸡胸肉", "雷击木", "快感",
+                        ],
+                        [
+                            "Talisman Bundle", "Standard-duty Battery",
+                            "Chicken Breast", "Thunder Branch", "Enrapturing Trance",
+                        ],
+                        gift_crop,
+                    ):
+                        protected_positions.append(gift_pos)
+                if protected_positions:
+                    my_list = [
+                        pos for pos in my_list
+                        if not any(
+                            abs(pos[0] - protected[0]) <= 10 and abs(pos[1] - protected[1]) <= 10
+                            for protected in protected_positions
+                        )
+                    ]
+                    log.debug(f"黎明黑兽预设：普通合成保护目标饰品 {len(protected_positions)} 件")
 
             if self.second_system and self.second_system_action[0]:
                 if protect_gift := auto.find_element(
