@@ -768,6 +768,29 @@ class Shop:
                             gift_pos[0] + 75,
                             gift_pos[1] + 75,
                         )
+                        # 必须保留攻略的五件目标饰品；若名称在当前卡片/悬浮信息中可识别，
+                        # 即使等级合格也不能拿去合成。
+                        protected_gift = auto.find_language_text(
+                            [
+                                "成捆的符咒",
+                                "标准负载电池",
+                                "干巴柴涩鸡胸肉",
+                                "鸡胸肉",
+                                "雷击木",
+                                "快感",
+                            ],
+                            [
+                                "Talisman Bundle",
+                                "Standard-duty Battery",
+                                "Chicken Breast",
+                                "Thunder Branch",
+                                "Enrapturing Trance",
+                            ],
+                            gift_crop,
+                        )
+                        if protected_gift:
+                            log.debug(f"黎明黑兽预设：保护目标饰品，不作为合成素材：{protected_gift}")
+                            continue
                         if auto.find_element(
                             "mirror/road_to_mir/observe_ego_gift/Level_III.png",
                             my_crop=gift_crop,
