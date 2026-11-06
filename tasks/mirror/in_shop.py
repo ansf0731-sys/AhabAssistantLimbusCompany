@@ -33,15 +33,28 @@ class Shop:
             log.info("黎明黑兽预设：默认商店策略由出售切换为普通合成，复用AALC原有购买/合成/强化流程")
         self.fuse_switch = False if shop_strategy == 0 else True  # 是否启动合成模式
         self.fuse_aggressive_switch = True if shop_strategy == 2 else False  # 是否启动激进合成模式
+        # 预设必须完成攻略所需的购买、普通合成、体系公式合成和强化；
+        # 仅覆盖本次 Shop 实例，不写回用户保存的队伍配置。
+        if self.dawn_black_beast_preset:
+            self.do_not_buy = False
+            self.do_not_fuse = False
+            self.do_not_sell = True
+            self.do_not_enhance = False
+            self.do_not_system_fuse = False
+            self.only_system_fuse = False
+            self.only_aggressive_fuse = False
+            self.shopping_strategy = False  # 同时沿用AALC必买项与破裂体系商品购买
+            log.info("黎明黑兽预设：启用购买、普通合成、破裂体系公式合成和强化；关闭饰品出售")
+        else:
+            self.do_not_buy = team_setting.do_not_buy  # 是否不购买
+            self.do_not_fuse = team_setting.do_not_fuse  # 是否不合成
+            self.do_not_sell = team_setting.do_not_sell  # 是否不出售
+            self.do_not_enhance = team_setting.do_not_enhance  # 是否不升级
+            self.only_aggressive_fuse = team_setting.only_aggressive_fuse  # 是否只进行激进合成，不进行其他合成
+            self.do_not_system_fuse = team_setting.do_not_system_fuse  # 是否不进行体系饰品合成
+            self.only_system_fuse = team_setting.only_system_fuse  # 是否只进行体系饰品合成
         self.do_not_heal = team_setting.do_not_heal  # 是否不治疗
-        self.do_not_buy = team_setting.do_not_buy  # 是否不购买
-        self.do_not_fuse = team_setting.do_not_fuse  # 是否不合成
-        self.do_not_sell = team_setting.do_not_sell  # 是否不出售
-        self.do_not_enhance = team_setting.do_not_enhance  # 是否不升级
         self.aggressive_save_systems = team_setting.aggressive_save_systems  # 激进合成期间保护本体系饰品
-        self.only_aggressive_fuse = team_setting.only_aggressive_fuse  # 是否只进行激进合成，不进行其他合成
-        self.do_not_system_fuse = team_setting.do_not_system_fuse  # 是否不进行体系饰品合成
-        self.only_system_fuse = team_setting.only_system_fuse  # 是否只进行体系饰品合成
         # 是否在合成四级后改变行动策略
         self.after_level_IV = team_setting.after_level_IV
         self.after_level_IV_select = team_setting.after_level_IV_select
