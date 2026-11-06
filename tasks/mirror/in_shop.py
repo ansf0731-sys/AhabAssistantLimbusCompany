@@ -858,7 +858,8 @@ class Shop:
                     else:
                         log.debug(
                             "黎明黑兽预设：当前素材不足，三级目标需3个II级素材；快感目标需3个III级或2个III级+1个II级素材"
-                        )                else:
+                        )
+                else:
                     if len(all_system_gift) > 0:
                         for gift_pos in all_system_gift:
                             if gift_pos[1] < dividing_line:
