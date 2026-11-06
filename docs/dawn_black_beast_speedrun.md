@@ -10,9 +10,9 @@ Enable **黎明黑兽速刷预设（逐层卡包优先级）** in the team setti
 | 2 | 地狱鸡 (chick) | Prefer the Hell Chicken pack; if the chicken-breast reward/event appears, handle the manual synthesis described below. |
 | 3 | 当斩 (cleaved) | Prefer the “当斩之物” pack. |
 | 4 | 憎恶与绝望 (Hatred / despair) | Prefer the “憎恶与绝望” pack. |
-| 5 | 转困牢 2号线 (line) | Prefer the hard-mode 2号线 pack when no event-pack override is active. |
+| 5 | 困难模式：二号线 (line) | 第五层强制切换困难模式；若勾选优先选择活动卡包，则选最左侧活动卡包，否则优先二号线。 |
 
-The preset changes only the in-memory priority for the current floor. It does not overwrite the user's global or per-team theme-pack weight YAML files. If the current language's keyword is not present in the loaded theme-pack list, the selector logs a warning and falls back to the existing weights.
+The preset changes only the in-memory priority for the current floor. It does not overwrite the user's global or per-team theme-pack weight YAML files. When enabled, the runtime difficulty switch is also forced to floor 5, regardless of the saved normal-to-hard floor setting. If the current language's keyword is not present in the loaded theme-pack list, the selector logs a warning and falls back to the existing weights.
 
 ## Opening star bonuses
 
@@ -22,16 +22,16 @@ The preset selects star-bonus positions **1, 3, and 10** for this run. It does n
 
 The supplementary guide image specifies the following target state and ordering:
 
-1. Obtain **成捆的符咒** from the first-floor bottom reward.
-2. Obtain **标准负载电池** through star-bonus **增益 10**.
-3. Preserve **成捆的符咒 + 荆棘套索 + 标准负载电池** as the ingredients for the level-IV **快感** (Enrapturing Trance) fusion. The documented recipe uses those three gifts; they must not be consumed by unrelated generic fusion.
-4. Target **雷击木 III** as a separate rupture gift, and enhance it only to the guide's required level. The guide's screenshot labels this as a manual synthesis step; its exact material combination still needs to be mapped to the repository's current formula templates.
-5. If the second-floor **地狱鸡无事事件** gives/uses **鸡胸肉**, handle that event reward as a separate high-priority target.
-6. Two additional **level-IV slash gifts** may be synthesized as supplementary gifts, but this is optional and lower priority than the core gifts.
-7. Complete the required shop operations no later than the bottom of floor four.
+1. On floor 1, prefer a pack whose bottom preview shows **成捆的符咒**; among matching packs, prefer **身无分文的赌徒** and **被遗忘者们**. At the floor-clear reward, choose **成捆的符咒**.
+2. Obtain **标准负载电池** through opening star-bonus **增益 10** and preserve it for the required fusion.
+3. Preserve **成捆的符咒、标准负载电池、荆棘套索** and other required gifts from unrelated fusion. The in-game rupture fusion has no fixed three-item recipe: select the rupture system, then use either **three level-III gifts** or **two level-III plus one level-II gift**. There are only two rupture level-IV outcomes, one of which is **快感**. The preset must identify the result and keep attempting valid rupture synthesis until 快感 is obtained; do not hard-code one ingredient tuple as the only valid route.
+4. Obtain **雷击木** and enhance it to **++**. The guide calls this manual synthesis; the current implementation still needs reliable gift-level recognition and protection before it can guarantee this target.
+5. On floor 2, choose **地狱鸡**. Prefer the event route that grants **干巴柴涩鸡胸肉**; otherwise prefer a pack whose bottom preview shows it and choose it at floor-clear reward. If neither route grants it, synthesize a level-III rupture gift whose bottom preview is **干巴柴涩鸡胸肉** in that floor's shop. The current implementation does not yet guarantee this event/reward fallback.
+6. The five mandatory gifts are **成捆的符咒、标准负载电池、干巴柴涩鸡胸肉、雷击木、快感**; all must be enhanced to **++**. If extra gifts remain after protecting these targets, synthesize and enhance two level-IV slash gifts as optional extras.
+7. Complete the mandatory gift acquisition, synthesis, and enhancement no later than the bottom of floor four.
 
 
-The preset now reuses AALC's existing shop workflow rather than reimplementing it. It locks the runtime team system to **rupture** (without changing the saved team config), forces conservative ordinary fusion (not aggressive fusion), and enables the existing purchase, ordinary fusion, rupture formula fusion, and enhancement stages. It disables selling and skips no shop floors for this run; it also disables the optional second-system route and post-level-IV shop shortcut. Old “discard other systems” settings are ignored so the optional level-IV slash gifts are not automatically selected as fusion materials. The existing unfiltered purchase path considers both AALC's must-buy items and rupture-system shop gifts. All overrides are runtime-only; the user's saved team config is not rewritten. No second click/coordinate system is introduced.
+The preset now reuses AALC's existing shop workflow rather than reimplementing it. It locks the runtime team system to **rupture** (without changing the saved team config), forces conservative ordinary fusion (not aggressive fusion), and enables the existing purchase, ordinary fusion, rupture fusion, and enhancement stages. It also switches to hard mode at floor 5. It disables selling and skips no shop floors for this run; it also disables the optional second-system route and post-level-IV shop shortcut. Old “discard other systems” settings are ignored so the optional level-IV slash gifts are not automatically selected as fusion materials. The existing unfiltered purchase path considers both AALC's must-buy items and rupture-system shop gifts. All overrides are runtime-only; the user's saved team config is not rewritten. No second click/coordinate system is introduced.
 
 The guide's skill-exchange plan is wired into the existing OCR-based skill replacement: Faust and Sinclair use 1→2 on floors 1–2, then 1→3 from floor 3 onward; Outis uses 2→3; other selected sinners use 1→3. The preset enables skill replacement for all selected sinners. This mapping assumes the guide's shorthand “菲辛” means Faust + Sinclair and “兔奥” means Rabbit Outis. AALC's existing skill selector recognizes sinner slots, not the equipped Identity name, so the selected Outis slot receives 2→3 even if a non-Rabbit Outis Identity is equipped; the preset does not independently verify Identity ownership. The runtime floor number is passed into the existing shop handler so the rule changes at floor 3.
 
@@ -53,4 +53,4 @@ The preset is opt-in and does not change other teams or the default selection be
 
 ## Validation status
 
-The branch contains the opt-in team setting, floor-specific theme-pack priority, opening star-bonus selection, a runtime rupture-system lock, runtime shop defaults that reuse AALC's existing buy/fuse/formula-fuse/enhance stages without selling, and per-sinner floor-aware skill replacement. No existing shop click/refresh/fusion/enhancement mechanism has been rewritten. The existing fusion templates are system/result-level; target-specific recognition and prioritization of the two rupture level-IV outcomes, reliable 快感 IV acquisition, 雷击木 III acquisition, explicit protection of chicken breast and other named gifts, a verified floor-four completion deadline, and live-game execution remain unimplemented or unverified. Do not treat the preset as a fully autonomous execution of the entire guide yet.
+The branch contains the opt-in team setting, floor-specific theme-pack priority, opening star-bonus selection, a runtime rupture-system lock, runtime shop defaults that reuse AALC's existing buy/fuse/formula-fuse/enhance stages without selling, and per-sinner floor-aware skill replacement. No existing shop click/refresh/fusion/enhancement mechanism has been rewritten. The existing fusion templates are system/result-level. The newly clarified valid ingredient counts are documented, but target-specific recognition of gift tiers and the two rupture level-IV outcomes, reliable 快感 acquisition, 雷击木 acquisition, explicit protection of chicken breast and other named gifts, reward-card selection, the floor-four completion deadline, and live-game execution remain unimplemented or unverified. Do not treat the preset as a fully autonomous execution of the entire guide yet.
