@@ -142,6 +142,33 @@ def select_theme_pack(
                         theme_pack_weight = unknown_weight
                         theme_pack_name = "unknown"
 
+                    # 一、二层除了识别卡包名称，还检查卡包底部展示的奖励饰品。
+                    # 第一层以“成捆的符咒”作为硬条件；第二层地狱鸡卡包若展示鸡胸肉则进一步加权。
+                    if dawn_black_beast_preset and floor in (1, 2):
+                        bottom_top = min(bottom_right[1], pack[1] + 215 * scale)
+                        bottom_crop = (top_left[0], bottom_top, bottom_right[0], bottom_right[1])
+                        if floor == 1:
+                            gift_match = auto.find_language_text(
+                                ["成捆的符咒", "符咒"],
+                                ["Talisman Bundle", "Bundle of Talismans"],
+                                bottom_crop,
+                            )
+                            preferred_pack = any(word in str(theme_pack_name).lower() for word in ("赌徒", "遗忘", "gambl", "forgot"))
+                            if gift_match:
+                                theme_pack_weight = max(theme_pack_weight, 250 if preferred_pack else 200)
+                            elif preferred_pack:
+                                log.debug(f"第一层卡包 {theme_pack_name} 未识别到底部成捆的符咒，保留名称优先级作为OCR兜底")
+                        else:
+                            gift_match = auto.find_language_text(
+                                ["干巴柴涩鸡胸肉", "鸡胸肉"],
+                                ["Chicken Breast", "Dried Chicken Breast"],
+                                bottom_crop,
+                            )
+                            if gift_match:
+                                theme_pack_weight = max(theme_pack_weight, 250)
+                            elif "地狱鸡" in str(theme_pack_name).lower() or "chick" in str(theme_pack_name).lower():
+                                theme_pack_weight = max(theme_pack_weight, 150)
+
                     weight_list.append(theme_pack_weight)  # 采用最大值的形式，权重越大，优先级越高
                     pack_name.append(theme_pack_name)
 
