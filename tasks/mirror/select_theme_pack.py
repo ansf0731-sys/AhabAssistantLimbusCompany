@@ -72,6 +72,11 @@ def select_theme_pack(
             5: ({"号线": 100}, {"line": 100}),
         }
         zh_targets, en_targets = floor_targets[floor]
+        # “2号线”在部分主题包目录中仅登记于困难侧；普牢/当前语言目录若未登记，
+        # 仍加入本次运行的 OCR 关键词，以便五层活动包/新目录出现时可以识别，不写回 YAML。
+        if floor == 5:
+            theme_pack_list_zh.setdefault("号线", 100)
+            theme_pack_list_en.setdefault("line", 100)
         applied = []
         for key, value in zh_targets.items():
             if key in theme_pack_list_zh:
