@@ -1237,14 +1237,16 @@ class Shop:
                 raise self.RestartGame()
             sleep(0.5)
 
-    def id_skill_replacement(self, image_path):
-        """
-        处理普通技能替换选项。识别指定模块位置的技能替换区域，
-        根据当前语言和队伍配置构建优先罪人列表，若匹配则执行替换点击流程。
+    def _dawn_black_beast_skill_mode(self, sinner_name):
+        """攻略技能替换：菲/辛前两层1→2、之后1→3；兔奥提斯2→3；其他人1→3。"""
+        if sinner_name in ("Faust", "Sinclair"):
+            return 2 if self.current_layer <= 2 else 0
+        if sinner_name == "Outis":
+            return 1
+        return 0
 
-        参数:
-            image_path (str): 代表该技能替换模块的图片路径。
-        """
+    def id_skill_replacement(self, image_path):
+        """普通商店技能替换；攻略预设按识别到的罪人分别应用替换模式。"""
         if module_position := auto.find_element(image_path):
             my_scale = cfg.set_win_size / 1440
             bbox = (
@@ -1254,20 +1256,37 @@ class Shop:
                 module_position[1] + 100 * my_scale,
             )
             sinner_nums = {0: 1, 1: 3, 2: 7}.get(self.skill_replacement_select, 12)
-            sinner_en = [
-                all_sinners_name[self.sinner_team.index(i + 1)]
-                for i in range(sinner_nums)
-                if (i + 1) in self.sinner_team
-            ]
-            sinner_zh = [
-                all_sinners_name_zh[self.sinner_team.index(i + 1)]
-                for i in range(sinner_nums)
-                if (i + 1) in self.sinner_team
-            ]
-            if auto.find_language_text(sinner_zh, sinner_en, my_crop=bbox):
-                auto.mouse_click(module_position[0], module_position[1] - 100 * my_scale)
-                sleep(0.5)
-                self._replace_selected_skill()
+            if self.dawn_black_beast_preset:
+                sinner_en = {}
+                sinner_zh = {}
+                for i in range(sinner_nums):
+                    if (i + 1) not in self.sinner_team:
+                        continue
+                    sinner_index = self.sinner_team.index(i + 1)
+                    sinner_name = all_sinners_name[sinner_index]
+                    mode = self._dawn_black_beast_skill_mode(sinner_name)
+                    sinner_en[sinner_name] = mode
+                    sinner_zh[all_sinners_name_zh[sinner_index]] = mode
+                match = auto.find_language_text(sinner_zh, sinner_en, my_crop=bbox)
+                if match and hasattr(match, "value"):
+                    auto.mouse_click(module_position[0], module_position[1] - 100 * my_scale)
+                    sleep(0.5)
+                    self._replace_selected_skill(match.value)
+            else:
+                sinner_en = [
+                    all_sinners_name[self.sinner_team.index(i + 1)]
+                    for i in range(sinner_nums)
+                    if (i + 1) in self.sinner_team
+                ]
+                sinner_zh = [
+                    all_sinners_name_zh[self.sinner_team.index(i + 1)]
+                    for i in range(sinner_nums)
+                    if (i + 1) in self.sinner_team
+                ]
+                if auto.find_language_text(sinner_zh, sinner_en, my_crop=bbox):
+                    auto.mouse_click(module_position[0], module_position[1] - 100 * my_scale)
+                    sleep(0.5)
+                    self._replace_selected_skill()
 
     def selected_id_skill_replacement(self, image_path):
         """
