@@ -24,10 +24,12 @@ The supplementary guide image specifies the following target state and ordering:
 
 1. Obtain **成捆的符咒** from the first-floor bottom reward.
 2. Obtain **标准负载电池** through star-bonus **增益 10**.
-3. Target **快感 IV** and **雷击木 III** through the existing rupture-system fusion/enhancement workflow. The current automation does not yet guarantee these exact outputs.
-4. If the second-floor **地狱鸡无事事件** gives/uses **鸡胸肉**, manually synthesize it as instructed by the guide.
-5. Two additional **level-IV slash gifts** may be synthesized as supplementary gifts, but this is optional and lower priority than the core gifts.
-6. Complete the required shop operations no later than the bottom of floor four.
+3. Preserve **成捆的符咒 + 荆棘套索 + 标准负载电池** as the ingredients for the level-IV **快感** (Enrapturing Trance) fusion. The documented recipe uses those three gifts; they must not be consumed by unrelated generic fusion.
+4. Target **雷击木 III** as a separate rupture gift, and enhance it only to the guide's required level. The guide's screenshot labels this as a manual synthesis step; its exact material combination still needs to be mapped to the repository's current formula templates.
+5. If the second-floor **地狱鸡无事事件** gives/uses **鸡胸肉**, handle that event reward as a separate high-priority target.
+6. Two additional **level-IV slash gifts** may be synthesized as supplementary gifts, but this is optional and lower priority than the core gifts.
+7. Complete the required shop operations no later than the bottom of floor four.
+
 
 The preset now reuses AALC's existing shop workflow rather than reimplementing it. It locks the runtime team system to **rupture** (without changing the saved team config), forces conservative ordinary fusion (not aggressive fusion), and enables the existing purchase, ordinary fusion, rupture formula fusion, and enhancement stages. It disables selling and skips no shop floors for this run; it also disables the optional second-system route and post-level-IV shop shortcut. The existing unfiltered purchase path considers both AALC's must-buy items and rupture-system shop gifts. All overrides are runtime-only; the user's saved team config is not rewritten. No second click/coordinate system is introduced.
 
@@ -51,4 +53,4 @@ The preset is opt-in and does not change other teams or the default selection be
 
 ## Validation status
 
-The branch contains the opt-in team setting, floor-specific theme-pack priority, opening star-bonus selection, a runtime rupture-system lock, runtime shop defaults that reuse AALC's existing buy/fuse/formula-fuse/enhance stages without selling, and per-sinner floor-aware skill replacement. No existing shop click/refresh/fusion/enhancement mechanism has been rewritten. The existing formula templates are system-level, not proof of exact named target outputs; target-specific gift acquisition, exact 快感 IV / 雷击木 III recipe enforcement, explicit protection of all named gifts, a verified floor-four completion deadline, and live-game execution remain unimplemented or unverified. Do not treat the preset as a fully autonomous execution of the entire guide yet.
+The branch contains the opt-in team setting, floor-specific theme-pack priority, opening star-bonus selection, a runtime rupture-system lock, runtime shop defaults that reuse AALC's existing buy/fuse/formula-fuse/enhance stages without selling, and per-sinner floor-aware skill replacement. No existing shop click/refresh/fusion/enhancement mechanism has been rewritten. The existing formula templates are system-level, not proof of exact named target outputs; target-specific gift acquisition, ingredient reservation and deterministic 快感 IV fusion, exact 雷击木 III recipe enforcement, explicit protection of all named gifts, a verified floor-four completion deadline, and live-game execution remain unimplemented or unverified. Do not treat the preset as a fully autonomous execution of the entire guide yet.
