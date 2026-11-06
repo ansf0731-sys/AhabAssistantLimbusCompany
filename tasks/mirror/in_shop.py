@@ -59,7 +59,7 @@ class Shop:
         self.after_level_IV = team_setting.after_level_IV
         self.after_level_IV_select = team_setting.after_level_IV_select
         # 是否自定义商店购物策略
-        self.shopping_strategy = team_setting.shopping_strategy
+        self.shopping_strategy = False if self.dawn_black_beast_preset else team_setting.shopping_strategy
         self.shopping_strategy_select = team_setting.shopping_strategy_select
         # 是否启用第二体系
         self.second_system = team_setting.second_system
