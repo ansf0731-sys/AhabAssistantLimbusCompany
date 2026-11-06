@@ -87,6 +87,7 @@ class Mirror:
         self.hard_mode = cfg.hard_mirror
         self.hard_reward_eligible = self.hard_mode  # 第一层是否以困难模式进行
         self.use_custom_theme_pack_weight = team_setting.use_custom_theme_pack_weight  # 是否启用自定义主题包权重
+        self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset  # 黎明黑兽逐层主题包预设
         # 统计时间
         self.find_road_total_time = 0
         self.battle_total_time = 0
@@ -293,7 +294,13 @@ class Mirror:
                     if self.floor > 0:
                         self._enter_hard_mode_if_needed()
                         switch_theme_pack_difficulty(self.hard_mode)
-                select_theme_pack(self.hard_mode, self.floor, self.team_order, self.use_custom_theme_pack_weight)
+                select_theme_pack(
+                    self.hard_mode,
+                    self.floor,
+                    self.team_order,
+                    self.use_custom_theme_pack_weight,
+                    self.dawn_black_beast_preset,
+                )
                 if self.re_formation_each_floor:
                     self.first_battle = True
                 if new_floor:
