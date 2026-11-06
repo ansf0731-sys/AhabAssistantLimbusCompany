@@ -1,0 +1,22 @@
+name: Validate Dawn Black Beast preset
+
+on:
+  push:
+    branches:
+      - feat/dawn-black-beast-speedrun
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install pytest ruamel.yaml
+      - name: Compile Python sources
+        run: python -m compileall -q app module tasks tests
+      - name: Run preset regression tests
+        run: python -m pytest -q tests/test_dawn_black_beast_preset.py
