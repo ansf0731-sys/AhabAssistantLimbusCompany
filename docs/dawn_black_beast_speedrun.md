@@ -24,20 +24,20 @@ The supplementary guide image specifies the following target state and ordering:
 
 1. Obtain **成捆的符咒** from the first-floor bottom reward.
 2. Obtain **标准负载电池** through star-bonus **增益 10**.
-3. Manually synthesize **快感** to level **IV** and **雷击木** to level **III**. These are the core gift targets.
+3. Target **快感 IV** and **雷击木 III** through the existing rupture-system fusion/enhancement workflow. The current automation does not yet guarantee these exact outputs.
 4. If the second-floor **地狱鸡无事事件** gives/uses **鸡胸肉**, manually synthesize it as instructed by the guide.
 5. Two additional **level-IV slash gifts** may be synthesized as supplementary gifts, but this is optional and lower priority than the core gifts.
 6. Complete the required shop operations no later than the bottom of floor four.
 
 The preset now reuses AALC's existing shop workflow rather than reimplementing it. It locks the runtime team system to **rupture** (without changing the saved team config), forces conservative ordinary fusion (not aggressive fusion), and enables the existing purchase, ordinary fusion, rupture formula fusion, and enhancement stages. It disables selling and skips no shop floors for this run; it also disables the optional second-system route and post-level-IV shop shortcut. The existing unfiltered purchase path considers both AALC's must-buy items and rupture-system shop gifts. All overrides are runtime-only; the user's saved team config is not rewritten. No second click/coordinate system is introduced.
 
-The guide's skill-exchange plan is also wired into the existing OCR-based skill replacement: Faust and Sinclair use 1→2 on floors 1–2, then 1→3 from floor 3 onward; Outis uses 2→3; other selected sinners use 1→3. The preset enables skill replacement for all selected sinners. This mapping assumes the guide's shorthand “菲辛” means Faust + Sinclair and “兔奥” means Rabbit Outis.
+The guide's skill-exchange plan is wired into the existing OCR-based skill replacement: Faust and Sinclair use 1→2 on floors 1–2, then 1→3 from floor 3 onward; Outis uses 2→3; other selected sinners use 1→3. The preset enables skill replacement for all selected sinners. This mapping assumes the guide's shorthand “菲辛” means Faust + Sinclair and “兔奥” means Rabbit Outis. The runtime floor number is passed into the existing shop handler so the rule changes at floor 3.
 
 However, the existing routines are system-oriented and generic: `buy_gifts()` buys system gifts according to the configured team system and shopping strategy; `fuse_useless_gifts()` fuses gifts already classified by the repository's `must_be_abandoned` templates; `fuse_system_gifts()` uses the repository's formula-result templates for the selected system; and `enhance_gifts()` enhances gifts recognized by the selected system's templates. They do **not** yet prove a specific recipe or guarantee the exact target levels 快感 IV and 雷击木 III, nor do they explicitly protect all five named guide gifts. The first-floor bundled talisman, standard load battery, chicken-breast event, and exact target fusion remain unverified. Do not interpret enabling ordinary fusion as a guarantee that these named targets will be made.
 
 ## Shop operation
 
-The guide's shop policy remains a required part of the route: finish the necessary operations before the floor-four bottom. The repository's existing generic shop controls (purchase/fuse/enhance/refresh and sinner skill replacement) remain available, but the preset does not yet override their per-sinner exchange counts or enforce a floor-four deadline. Configure/monitor those actions manually until a dedicated, tested route controller is implemented.
+The preset runs the existing shop at every floor, does not sell gifts, performs ordinary (non-aggressive) fusion, performs rupture formula fusion, enables enhancement, and enables the floor-aware skill-exchange plan. It keeps the existing refresh limits from the user's team settings. AALC runs its shop handler when it reaches each shop; the current code does not have a separate timer/deadline that can prove all purchases and target gifts are complete by the floor-four bottom. Exact target gift completion is still unverified.
 
 ## Fifth-floor event-pack compatibility
 
@@ -51,4 +51,4 @@ The preset is opt-in and does not change other teams or the default selection be
 
 ## Validation status
 
-The branch contains the opt-in team setting, floor-specific theme-pack priority, opening star-bonus selection, a runtime rupture-system lock, and runtime shop defaults that invoke AALC's existing buy/fuse/formula-fuse/enhance stages without selling. No existing shop click/refresh/fusion/enhancement mechanism has been rewritten. The existing formula templates are system-level, not proof of exact named target outputs; target-specific gift acquisition, exact 快感 IV / 雷击木 III recipe enforcement, explicit protection of all named gifts, per-sinner exchange counts, a verified floor-four deadline, and live-game execution remain unimplemented or unverified. Do not treat the preset as a fully autonomous execution of the entire guide yet.
+The branch contains the opt-in team setting, floor-specific theme-pack priority, opening star-bonus selection, a runtime rupture-system lock, runtime shop defaults that reuse AALC's existing buy/fuse/formula-fuse/enhance stages without selling, and per-sinner floor-aware skill replacement. No existing shop click/refresh/fusion/enhancement mechanism has been rewritten. The existing formula templates are system-level, not proof of exact named target outputs; target-specific gift acquisition, exact 快感 IV / 雷击木 III recipe enforcement, explicit protection of all named gifts, a verified floor-four completion deadline, and live-game execution remain unimplemented or unverified. Do not treat the preset as a fully autonomous execution of the entire guide yet.
