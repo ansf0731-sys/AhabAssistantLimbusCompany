@@ -1325,7 +1325,12 @@ class Shop:
             sleep(0.5)
             auto.mouse_click(sinner_x[i], sinner_y)
             sleep(0.5)
-            self._replace_selected_skill()
+            if self.dawn_black_beast_preset:
+                sinner_index = self.sinner_team.index(i + 1)
+                sinner_name = all_sinners_name[sinner_index]
+                self._replace_selected_skill(self._dawn_black_beast_skill_mode(sinner_name))
+            else:
+                self._replace_selected_skill()
         # 如果所有优先罪人都没有技能可替换，则点击返回按钮退出该界面
         auto.click_element("mirror/shop/ID_skill_replace_search_return_assets.png")
 
@@ -1369,6 +1374,7 @@ class Shop:
 
     # 在商店的处理
     def in_shop(self, layer):
+        self.current_layer = layer
         heal = False
         sell = False
         buy = False
