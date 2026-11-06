@@ -24,37 +24,59 @@ class Shop:
                 continue
             if getattr(team_setting, f"system_{system}", False):
                 self.shop_sell_list.append(system)
-        self.fuse_switch = False if team_setting.shop_strategy == 0 else True  # 是否启动合成模式
-        self.fuse_aggressive_switch = True if team_setting.shop_strategy == 2 else False  # 是否启动激进合成模式
+        if team_setting.dawn_black_beast_preset:
+            # 攻略的两个四级斩击饰品是可选补充项，不能被旧队伍的“舍弃体系”设置误合成。
+            self.shop_sell_list = []
+        # 黎明黑兽攻略强制采用AALC现有普通合成流程，避免用户保存的激进策略影响目标饰品。
+        self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset
+        shop_strategy = 1 if self.dawn_black_beast_preset else team_setting.shop_strategy
+        if self.dawn_black_beast_preset:
+            log.info("黎明黑兽预设：本次运行固定使用普通合成，避免激进合成误消耗目标饰品")
+        self.fuse_switch = False if shop_strategy == 0 else True  # 是否启动合成模式
+        self.fuse_aggressive_switch = True if shop_strategy == 2 else False  # 是否启动激进合成模式
+        # 预设必须完成攻略所需的购买、普通合成、体系公式合成和强化；
+        # 仅覆盖本次 Shop 实例，不写回用户保存的队伍配置。
+        if self.dawn_black_beast_preset:
+            self.do_not_buy = False
+            self.do_not_fuse = False
+            self.do_not_sell = True
+            self.do_not_enhance = False
+            self.do_not_system_fuse = False
+            self.only_system_fuse = False
+            self.only_aggressive_fuse = False
+            self.shopping_strategy = False  # 同时沿用AALC必买项与破裂体系商品购买
+            log.info("黎明黑兽预设：启用购买、普通合成、破裂体系公式合成和强化；关闭饰品出售")
+        else:
+            self.do_not_buy = team_setting.do_not_buy  # 是否不购买
+            self.do_not_fuse = team_setting.do_not_fuse  # 是否不合成
+            self.do_not_sell = team_setting.do_not_sell  # 是否不出售
+            self.do_not_enhance = team_setting.do_not_enhance  # 是否不升级
+            self.only_aggressive_fuse = team_setting.only_aggressive_fuse  # 是否只进行激进合成，不进行其他合成
+            self.do_not_system_fuse = team_setting.do_not_system_fuse  # 是否不进行体系饰品合成
+            self.only_system_fuse = team_setting.only_system_fuse  # 是否只进行体系饰品合成
         self.do_not_heal = team_setting.do_not_heal  # 是否不治疗
-        self.do_not_buy = team_setting.do_not_buy  # 是否不购买
-        self.do_not_fuse = team_setting.do_not_fuse  # 是否不合成
-        self.do_not_sell = team_setting.do_not_sell  # 是否不出售
-        self.do_not_enhance = team_setting.do_not_enhance  # 是否不升级
         self.aggressive_save_systems = team_setting.aggressive_save_systems  # 激进合成期间保护本体系饰品
-        self.only_aggressive_fuse = team_setting.only_aggressive_fuse  # 是否只进行激进合成，不进行其他合成
-        self.do_not_system_fuse = team_setting.do_not_system_fuse  # 是否不进行体系饰品合成
-        self.only_system_fuse = team_setting.only_system_fuse  # 是否只进行体系饰品合成
         # 是否在合成四级后改变行动策略
-        self.after_level_IV = team_setting.after_level_IV
+        self.after_level_IV = False if self.dawn_black_beast_preset else team_setting.after_level_IV
         self.after_level_IV_select = team_setting.after_level_IV_select
         # 是否自定义商店购物策略
-        self.shopping_strategy = team_setting.shopping_strategy
+        self.shopping_strategy = False if self.dawn_black_beast_preset else team_setting.shopping_strategy
         self.shopping_strategy_select = team_setting.shopping_strategy_select
         # 是否启用第二体系
-        self.second_system = team_setting.second_system
+        self.second_system = False if self.dawn_black_beast_preset else team_setting.second_system
         self.second_system_select = all_systems[team_setting.second_system_select]
         self.second_system_setting = team_setting.second_system_setting
         self.second_system_action = team_setting.second_system_action
         # 技能替换
-        self.skill_replacement = team_setting.skill_replacement
-        self.skill_replacement_select = team_setting.skill_replacement_select
+        self.skill_replacement = True if self.dawn_black_beast_preset else team_setting.skill_replacement
+        self.skill_replacement_select = 3 if self.dawn_black_beast_preset else team_setting.skill_replacement_select
         self.skill_replacement_mode = team_setting.skill_replacement_mode
+        self.current_layer = 0
         self.max_keyword_refresh = team_setting.max_keyword_refresh
         self.max_normal_refresh = team_setting.max_normal_refresh
-        self.ignore_shop = team_setting.ignore_shop  # 忽略的商店楼层
+        self.ignore_shop = [False] * 5 if self.dawn_black_beast_preset else team_setting.ignore_shop  # 攻略预设不跳过必要商店
 
-        self.aggressive_also_enhance = team_setting.aggressive_also_enhance  # 激进合成期间也升级饰品
+        self.aggressive_also_enhance = False if self.dawn_black_beast_preset else team_setting.aggressive_also_enhance  # 激进合成期间也升级饰品
 
         self.fuse_IV = False
         self.fuse_second_IV = False
@@ -66,6 +88,9 @@ class Shop:
         # 用于记录已升级的ego饰品
         self.enhance_gifts_list = []
         self.first_gift_enhance = False
+        # 记录本次运行中通过破裂体系随机合成确认获得的攻略目标。
+        self.dawn_black_beast_found = set()
+        self.dawn_black_beast_enhanced = set()
 
     class RestartGame(Exception):
         pass
@@ -95,7 +120,7 @@ class Shop:
                 auto.model = "aggressive"
             if loop_count < 0:
                 log.error("无法升级ego饰品")
-                break
+                return False
 
     def buy_gifts(self):
         def sort_points(points, complete=0, threshold=40):
@@ -582,6 +607,36 @@ class Shop:
                         gift_list.append(gift)
             # 对饰品位置列表进行排序、去重处理
             my_list = processing_coordinates(gift_list)
+            if self.dawn_black_beast_preset and my_list:
+                protected_positions = []
+                for gift_pos in my_list:
+                    gift_crop = (
+                        max(0, gift_pos[0] - 90),
+                        max(0, gift_pos[1] - 90),
+                        gift_pos[0] + 90,
+                        gift_pos[1] + 90,
+                    )
+                    if auto.find_language_text(
+                        [
+                            "成捆的符咒", "标准负载电池", "干巴柴涩鸡胸肉",
+                            "鸡胸肉", "雷击木", "快感",
+                        ],
+                        [
+                            "Talisman Bundle", "Standard-duty Battery",
+                            "Chicken Breast", "Thunder Branch", "Enrapturing Trance",
+                        ],
+                        gift_crop,
+                    ):
+                        protected_positions.append(gift_pos)
+                if protected_positions:
+                    my_list = [
+                        pos for pos in my_list
+                        if not any(
+                            abs(pos[0] - protected[0]) <= 10 and abs(pos[1] - protected[1]) <= 10
+                            for protected in protected_positions
+                        )
+                    ]
+                    log.debug(f"黎明黑兽预设：普通合成保护目标饰品 {len(protected_positions)} 件")
 
             if self.second_system and self.second_system_action[0]:
                 if protect_gift := auto.find_element(
@@ -698,6 +753,22 @@ class Shop:
         while True:
             if list_block := auto.find_element("mirror/shop/gifts_list_block.png", take_screenshot=True):
                 auto.mouse_drag(list_block[0], list_block[1], drag_time=1, dy=-500)
+            if self.dawn_black_beast_preset:
+                # 先检查当前可见库存；已拥有的目标不再重复追求，也不作为合成素材。
+                for target_name, names_zh, names_en in [
+                    ("快感", ["快感"], ["Enrapturing Trance"]),
+                    ("干巴柴涩鸡胸肉", ["干巴柴涩鸡胸肉", "鸡胸肉"], ["Chicken Breast"]),
+                    ("雷击木", ["雷击木"], ["Thunder Branch"]),
+                ]:
+                    if target_name not in self.dawn_black_beast_found and auto.find_language_text(
+                        names_zh, names_en, all_text=True
+                    ):
+                        self.dawn_black_beast_found.add(target_name)
+                        log.info(f"黎明黑兽预设：库存中已识别目标饰品“{target_name}”")
+                if {"快感", "干巴柴涩鸡胸肉", "雷击木"}.issubset(self.dawn_black_beast_found):
+                    log.info("黎明黑兽预设：破裂随机合成的三件目标饰品均已获得")
+                    auto.mouse_click_blank(times=3)
+                    return
             points = auto.find_element(
                 "mirror/shop/fuse_label.png",
                 find_type="image_with_multiple_targets",
@@ -714,15 +785,17 @@ class Shop:
 
             fusion = False
             fusion_gift = None
-            # 如果找到能合成的公式饰品，则合成
-            for gift in system_gifts:
-                if pos := auto.find_element(gift):
-                    if pos[1] > dividing_line:
-                        continue
-                    auto.mouse_click(pos[0], pos[1])
-                    fusion = True
-                    fusion_gift = gift.split("_")[-1]
-                    break
+            # 普通队伍沿用仓库中的固定公式模板；攻略预设按游戏内破裂体系的通用等级规则合成，
+            # 不把某一组三件饰品误当作“快感”的固定配方。
+            if not self.dawn_black_beast_preset:
+                for gift in system_gifts:
+                    if pos := auto.find_element(gift):
+                        if pos[1] > dividing_line:
+                            continue
+                        auto.mouse_click(pos[0], pos[1])
+                        fusion = True
+                        fusion_gift = gift.split("_")[-1]
+                        break
 
             fusion_pos = []
             if not fusion:
@@ -731,15 +804,74 @@ class Shop:
                     find_type="image_with_multiple_targets",
                     take_screenshot=True,
                 )
-                if len(all_system_gift) > 0:
-                    for g in all_system_gift:
-                        if g[1] < dividing_line:
-                            fusion_pos.append(g)
+                if self.dawn_black_beast_preset:
+                    level_III = []
+                    level_II = []
+                    for gift_pos in all_system_gift:
+                        if gift_pos[1] >= dividing_line:
+                            continue
+                        gift_crop = (
+                            max(0, gift_pos[0] - 75),
+                            max(0, gift_pos[1] - 75),
+                            gift_pos[0] + 75,
+                            gift_pos[1] + 75,
+                        )
+                        protected_gift = auto.find_language_text(
+                            [
+                                "成捆的符咒", "标准负载电池", "干巴柴涩鸡胸肉",
+                                "鸡胸肉", "雷击木", "快感",
+                            ],
+                            [
+                                "Talisman Bundle", "Standard-duty Battery",
+                                "Chicken Breast", "Thunder Branch", "Enrapturing Trance",
+                            ],
+                            gift_crop,
+                        )
+                        if protected_gift:
+                            log.debug(f"黎明黑兽预设：保护目标饰品，不作为随机合成素材：{protected_gift}")
+                            continue
+                        if auto.find_element(
+                            "mirror/road_to_mir/observe_ego_gift/Level_III.png",
+                            my_crop=gift_crop,
+                            threshold=0.72,
+                        ):
+                            level_III.append(gift_pos)
+                        elif auto.find_element(
+                            "mirror/road_to_mir/observe_ego_gift/Level_II.png",
+                            my_crop=gift_crop,
+                            threshold=0.72,
+                        ):
+                            level_II.append(gift_pos)
+
+                    level_III.sort(key=lambda pos: (pos[1], pos[0]))
+                    level_II.sort(key=lambda pos: (pos[1], pos[0]))
+                    missing_level_III_targets = {
+                        "干巴柴涩鸡胸肉", "雷击木"
+                    } - self.dawn_black_beast_found
+                    if missing_level_III_targets:
+                        # 先完成鸡胸肉、雷击木两个随机三级目标；素材不足时绝不消耗三级素材去做四级。
+                        if len(level_II) >= 3:
+                            fusion_pos = level_II[:3]
+                            log.info("黎明黑兽预设：尝试随机合成破裂三级饰品，目标剩余：" + "、".join(sorted(missing_level_III_targets)))
+                        else:
+                            log.debug("黎明黑兽预设：三级目标尚未齐全且II级素材不足3个，暂不消耗III级素材")
+                    elif len(level_III) >= 3:
+                        fusion_pos = level_III[:3]
+                    elif len(level_III) >= 2 and len(level_II) >= 1:
+                        fusion_pos = level_III[:2] + level_II[:1]
+                    else:
+                        log.debug(
+                            "黎明黑兽预设：快感目标素材不足，需要3个III级或2个III级+1个II级素材"
+                        )
+                else:
+                    if len(all_system_gift) > 0:
+                        for gift_pos in all_system_gift:
+                            if gift_pos[1] < dividing_line:
+                                fusion_pos.append(gift_pos)
                 if len(fusion_pos) == 0:
                     auto.mouse_click_blank(times=3)
                     return
-                else:
-                    fusion = True
+                fusion = True
 
             if len(fusion_pos) > 0 and fusion_gift is None:
                 pos = fusion_pos.pop(0)
@@ -764,7 +896,28 @@ class Shop:
 
                 auto.mouse_to_blank()
 
-                if auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png"):
+                if auto.find_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png"):
+                    target_gift = None
+                    if self.dawn_black_beast_preset:
+                        result_names = [
+                            ("快感", ["快感"], ["Enrapturing Trance"]),
+                            ("干巴柴涩鸡胸肉", ["干巴柴涩鸡胸肉", "鸡胸肉"], ["Chicken Breast"]),
+                            ("雷击木", ["雷击木"], ["Thunder Branch"]),
+                        ]
+                        for target_name, names_zh, names_en in result_names:
+                            if auto.find_language_text(names_zh, names_en, all_text=True):
+                                target_gift = target_name
+                                self.dawn_black_beast_found.add(target_name)
+                                log.info(f"黎明黑兽预设：随机合成结果已识别目标饰品“{target_name}”")
+                                break
+                    auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png")
+                    sleep(0.5)
+                    auto.click_element(
+                        "mirror/road_in_mir/ego_gift_get_confirm_assets.png",
+                        take_screenshot=True,
+                    )
+                    if target_gift == "快感":
+                        log.info("黎明黑兽预设：已识别到目标四级破裂饰品“快感”；继续检查另外两件三级目标")
                     break
 
                 if auto.click_element(
@@ -1077,6 +1230,32 @@ class Shop:
 
             next_gift = True
 
+            # 攻略指定饰品可能来自不同体系，不能只依赖当前破裂体系图标模板。
+            # 复用 AALC 现有强化按钮，对五件指定饰品逐件尝试强化；坐标记录避免同一轮反复点击。
+            if self.dawn_black_beast_preset:
+                dawn_targets = [
+                    ("成捆的符咒", ["成捆的符咒"], ["Talisman Bundle", "Bundle of Talismans"]),
+                    ("标准负载电池", ["标准负载电池"], ["Standard-duty Battery", "Standard Duty Battery"]),
+                    ("干巴柴涩鸡胸肉", ["干巴柴涩鸡胸肉", "鸡胸肉"], ["Chicken Breast"]),
+                    ("雷击木", ["雷击木"], ["Thunder Branch"]),
+                    ("快感", ["快感"], ["Enrapturing Trance"]),
+                ]
+                for target_name, names_zh, names_en in dawn_targets:
+                    if target_name in self.dawn_black_beast_enhanced:
+                        continue
+                    target_pos = auto.find_language_text(names_zh, names_en)
+                    if target_pos:
+                        auto.mouse_click(target_pos[0], target_pos[1])
+                        if self.ego_gift_to_power_up() is False:
+                            break
+                        self.dawn_black_beast_enhanced.add(target_name)
+                        log.info(f"黎明黑兽预设：已对目标饰品“{target_name}”执行一次AALC强化操作")
+                        next_gift = False
+                        break
+
+            if next_gift is False:
+                break
+
             # 升级本体系四级
             if not system_level_IV:
                 if level_IV := auto.find_element(f"mirror/shop/level_IV_gifts/{self.system}_level_IV.png"):
@@ -1191,9 +1370,10 @@ class Shop:
         self.fuse_aggressive_switch = False
         log.info("合成四级，切换到非激进模式")
 
-    def _replace_selected_skill(self):
+    def _replace_selected_skill(self, mode_override=None):
         """按配置顺序尝试技能替换；每次重新识别，避免购买后点击旧坐标。"""
-        modes = {3: (1, 0), 4: (0, 1)}.get(self.skill_replacement_mode, (self.skill_replacement_mode,))
+        selected_mode = self.skill_replacement_mode if mode_override is None else mode_override
+        modes = {3: (1, 0), 4: (0, 1)}.get(selected_mode, (selected_mode,))
         for mode in modes:
             if mode not in (0, 1, 2):
                 return
@@ -1215,14 +1395,16 @@ class Shop:
                 raise self.RestartGame()
             sleep(0.5)
 
-    def id_skill_replacement(self, image_path):
-        """
-        处理普通技能替换选项。识别指定模块位置的技能替换区域，
-        根据当前语言和队伍配置构建优先罪人列表，若匹配则执行替换点击流程。
+    def _dawn_black_beast_skill_mode(self, sinner_name):
+        """攻略技能替换：菲/辛前两层1→2、之后1→3；兔奥提斯2→3；其他人1→3。"""
+        if sinner_name in ("Faust", "Sinclair"):
+            return 2 if self.current_layer <= 2 else 0
+        if sinner_name == "Outis":
+            return 1
+        return 0
 
-        参数:
-            image_path (str): 代表该技能替换模块的图片路径。
-        """
+    def id_skill_replacement(self, image_path):
+        """普通商店技能替换；攻略预设按识别到的罪人分别应用替换模式。"""
         if module_position := auto.find_element(image_path):
             my_scale = cfg.set_win_size / 1440
             bbox = (
@@ -1232,20 +1414,37 @@ class Shop:
                 module_position[1] + 100 * my_scale,
             )
             sinner_nums = {0: 1, 1: 3, 2: 7}.get(self.skill_replacement_select, 12)
-            sinner_en = [
-                all_sinners_name[self.sinner_team.index(i + 1)]
-                for i in range(sinner_nums)
-                if (i + 1) in self.sinner_team
-            ]
-            sinner_zh = [
-                all_sinners_name_zh[self.sinner_team.index(i + 1)]
-                for i in range(sinner_nums)
-                if (i + 1) in self.sinner_team
-            ]
-            if auto.find_language_text(sinner_zh, sinner_en, my_crop=bbox):
-                auto.mouse_click(module_position[0], module_position[1] - 100 * my_scale)
-                sleep(0.5)
-                self._replace_selected_skill()
+            if self.dawn_black_beast_preset:
+                sinner_en = {}
+                sinner_zh = {}
+                for i in range(sinner_nums):
+                    if (i + 1) not in self.sinner_team:
+                        continue
+                    sinner_index = self.sinner_team.index(i + 1)
+                    sinner_name = all_sinners_name[sinner_index]
+                    mode = self._dawn_black_beast_skill_mode(sinner_name)
+                    sinner_en[sinner_name] = mode
+                    sinner_zh[all_sinners_name_zh[sinner_index]] = mode
+                match = auto.find_language_text(sinner_zh, sinner_en, my_crop=bbox)
+                if match and hasattr(match, "value"):
+                    auto.mouse_click(module_position[0], module_position[1] - 100 * my_scale)
+                    sleep(0.5)
+                    self._replace_selected_skill(match.value)
+            else:
+                sinner_en = [
+                    all_sinners_name[self.sinner_team.index(i + 1)]
+                    for i in range(sinner_nums)
+                    if (i + 1) in self.sinner_team
+                ]
+                sinner_zh = [
+                    all_sinners_name_zh[self.sinner_team.index(i + 1)]
+                    for i in range(sinner_nums)
+                    if (i + 1) in self.sinner_team
+                ]
+                if auto.find_language_text(sinner_zh, sinner_en, my_crop=bbox):
+                    auto.mouse_click(module_position[0], module_position[1] - 100 * my_scale)
+                    sleep(0.5)
+                    self._replace_selected_skill()
 
     def selected_id_skill_replacement(self, image_path):
         """
@@ -1284,7 +1483,12 @@ class Shop:
             sleep(0.5)
             auto.mouse_click(sinner_x[i], sinner_y)
             sleep(0.5)
-            self._replace_selected_skill()
+            if self.dawn_black_beast_preset:
+                sinner_index = self.sinner_team.index(i + 1)
+                sinner_name = all_sinners_name[sinner_index]
+                self._replace_selected_skill(self._dawn_black_beast_skill_mode(sinner_name))
+            else:
+                self._replace_selected_skill()
         # 如果所有优先罪人都没有技能可替换，则点击返回按钮退出该界面
         auto.click_element("mirror/shop/ID_skill_replace_search_return_assets.png")
 
@@ -1328,6 +1532,7 @@ class Shop:
 
     # 在商店的处理
     def in_shop(self, layer):
+        self.current_layer = layer
         heal = False
         sell = False
         buy = False

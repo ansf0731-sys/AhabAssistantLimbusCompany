@@ -33,7 +33,13 @@ def switch_theme_pack_difficulty(hard_mode=False):
 
 @begin_and_finish_time_log(task_name="选择镜牢主题包")
 # 选择镜牢主题包
-def select_theme_pack(hard_mode=False, floor=None, team_num=None, use_custom_theme_pack_weight=False):
+def select_theme_pack(
+    hard_mode=False,
+    floor=None,
+    team_num=None,
+    use_custom_theme_pack_weight=False,
+    dawn_black_beast_preset=False,
+):
     loop_count = 30
     auto.model = "clam"
     scale = cfg.set_win_size / 1080
@@ -54,6 +60,37 @@ def select_theme_pack(hard_mode=False, floor=None, team_num=None, use_custom_the
         theme_pack_list_en = theme_list.get_effective_theme_pack_list(
             hard_mode, "en", team_num, use_custom_theme_pack_weight
         )
+    # 黎明黑兽速刷攻略：按楼层覆盖目标主题包权重，不改动用户保存的全局/队伍权重。
+    # 五层活动卡包的既有处理优先保留：select_event_pack 仍然优先选活动包，
+    # skip_event_pack 仍然会在后续扫描时排除最左侧活动包。
+    if dawn_black_beast_preset and floor in (1, 2, 3, 4, 5):
+        floor_targets = {
+            1: ({"赌徒": 100, "遗忘": 100}, {"gambl": 100, "forgot": 100}),
+            2: ({"地狱鸡": 100}, {"chick": 100}),
+            3: ({"当斩": 100}, {"cleaved": 100}),
+            4: ({"绝望": 100}, {"Hatred": 100}),
+            5: ({"号线": 100}, {"line": 100}),
+        }
+        zh_targets, en_targets = floor_targets[floor]
+        # “2号线”在部分主题包目录中仅登记于困难侧；普牢/当前语言目录若未登记，
+        # 仍加入本次运行的 OCR 关键词，以便五层活动包/新目录出现时可以识别，不写回 YAML。
+        if floor == 5:
+            theme_pack_list_zh.setdefault("号线", 100)
+            theme_pack_list_en.setdefault("line", 100)
+        applied = []
+        for key, value in zh_targets.items():
+            if key in theme_pack_list_zh:
+                theme_pack_list_zh[key] = value
+                applied.append(key)
+        for key, value in en_targets.items():
+            if key in theme_pack_list_en:
+                theme_pack_list_en[key] = value
+                applied.append(key)
+        if applied:
+            log.info(f"黎明黑兽预设：第{floor}层主题包目标优先级已启用：{', '.join(applied)}")
+        else:
+            log.warning(f"黎明黑兽预设：第{floor}层未找到本语言对应的目标主题包关键词，沿用默认权重")
+
     # 游戏更新后新增的主题包尚未收录时的兜底权重，取自「未知 / unknown」配置项
     unknown_weight = int(theme_pack_list_zh.get("未知", theme_pack_list_en.get("unknown", -5)))
     refresh_times = 3
@@ -104,6 +141,33 @@ def select_theme_pack(hard_mode=False, floor=None, team_num=None, use_custom_the
                     else:
                         theme_pack_weight = unknown_weight
                         theme_pack_name = "unknown"
+
+                    # 一、二层除了识别卡包名称，还检查卡包底部展示的奖励饰品。
+                    # 第一层以“成捆的符咒”作为硬条件；第二层地狱鸡卡包若展示鸡胸肉则进一步加权。
+                    if dawn_black_beast_preset and floor in (1, 2):
+                        bottom_top = min(bottom_right[1], pack[1] + 215 * scale)
+                        bottom_crop = (top_left[0], bottom_top, bottom_right[0], bottom_right[1])
+                        if floor == 1:
+                            gift_match = auto.find_language_text(
+                                ["成捆的符咒", "符咒"],
+                                ["Talisman Bundle", "Bundle of Talismans"],
+                                bottom_crop,
+                            )
+                            preferred_pack = any(word in str(theme_pack_name).lower() for word in ("赌徒", "遗忘", "gambl", "forgot"))
+                            if gift_match:
+                                theme_pack_weight = max(theme_pack_weight, 250 if preferred_pack else 200)
+                            elif preferred_pack:
+                                log.debug(f"第一层卡包 {theme_pack_name} 未识别到底部成捆的符咒，保留名称优先级作为OCR兜底")
+                        else:
+                            gift_match = auto.find_language_text(
+                                ["干巴柴涩鸡胸肉", "鸡胸肉"],
+                                ["Chicken Breast", "Dried Chicken Breast"],
+                                bottom_crop,
+                            )
+                            if gift_match:
+                                theme_pack_weight = max(theme_pack_weight, 250)
+                            elif "地狱鸡" in str(theme_pack_name).lower() or "chick" in str(theme_pack_name).lower():
+                                theme_pack_weight = max(theme_pack_weight, 150)
 
                     weight_list.append(theme_pack_weight)  # 采用最大值的形式，权重越大，优先级越高
                     pack_name.append(theme_pack_name)

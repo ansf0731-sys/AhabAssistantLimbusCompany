@@ -41,7 +41,7 @@ _CLAIM_RETRY_DELAY = 5.0
 
 @begin_and_finish_time_log(task_name="镜牢获取奖励卡", calculate_time=False)
 # 获取奖励卡
-def get_reward_card(model=0):
+def get_reward_card(model=0, target_gifts=None):
     loop_count = 30
     claim_retry_at = 0.0
     state = "select_reward"
@@ -90,10 +90,19 @@ def get_reward_card(model=0):
 
         if state == "select_reward":
             select_reward = False
-            for card in reward_card:
-                if auto.click_element(f"mirror/get_reward_card/{card}.png"):
-                    select_reward = True
-                    break
+            # 攻略预设可先按饰品名称选择本层指定奖励；未识别到目标时保留AALC原有奖励优先级兜底。
+            if target_gifts:
+                for gift_name in target_gifts:
+                    if gift_position := auto.find_text_element(gift_name):
+                        auto.mouse_click(gift_position[0], gift_position[1])
+                        select_reward = True
+                        log.info(f"攻略奖励优先：选择饰品 {gift_name}")
+                        break
+            if not select_reward:
+                for card in reward_card:
+                    if auto.click_element(f"mirror/get_reward_card/{card}.png"):
+                        select_reward = True
+                        break
             if select_reward:
                 state = "claim_reward"
                 continue

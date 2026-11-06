@@ -48,6 +48,10 @@ def to_log_with_time(msg, elapsed_time):
 class Mirror:
     def __init__(self, team_setting: TeamSetting, team_num: int):
         team_setting = team_setting.model_copy(deep=True)  # 避免修改原始配置
+        # 黎明黑兽攻略是破裂体系；预设启用时统一使用破裂体系驱动战斗与商店逻辑。
+        if team_setting.dawn_black_beast_preset:
+            team_setting.team_system = 3
+            log.info("黎明黑兽预设：本次运行锁定破裂体系")
         self.logger = log
         self.team_order = team_num
         self.sinner_team = team_setting.sinner_order  # 选择的罪人序列
@@ -56,8 +60,12 @@ class Mirror:
         self.system = all_systems[team_setting.team_system]  # 选择的体系
         self.avoid_skill_3 = team_setting.avoid_skill_3  # 是否避免使用3技能
         self.prioritize_skill_3 = team_setting.prioritize_skill_3  # 是否优先使用3技能
-        # 开局星光加成
-        self.opening_bonus = team_setting.opening_bonus
+        # 开局星光加成；攻略固定选择第1、3、10项，其他队伍仍沿用原设置。
+        self.opening_bonus = (
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1]
+            if team_setting.dawn_black_beast_preset
+            else team_setting.opening_bonus
+        )
         self.use_starlight = team_setting.use_starlight
         # 自选奖励卡优先度
         self.reward_cards = team_setting.reward_cards
@@ -67,7 +75,8 @@ class Mirror:
         self.opening_items_select = team_setting.opening_items_select
         self.opening_items_system = team_setting.opening_items_system
         self.re_formation_each_floor = team_setting.re_formation_each_floor  # 是否每层重新配队
-        self.normal_to_hard_floor = team_setting.normal_to_hard_floor
+        # 攻略要求第五层进入困难模式；只覆盖本次运行，不修改已保存的队伍设置。
+        self.normal_to_hard_floor = 5 if team_setting.dawn_black_beast_preset else team_setting.normal_to_hard_floor
         # 第二体系
         self.second_system = team_setting.second_system  # 启用第二体系
         self.second_system_select = team_setting.second_system_select  # 选择的第二体系
@@ -87,6 +96,7 @@ class Mirror:
         self.hard_mode = cfg.hard_mirror
         self.hard_reward_eligible = self.hard_mode  # 第一层是否以困难模式进行
         self.use_custom_theme_pack_weight = team_setting.use_custom_theme_pack_weight  # 是否启用自定义主题包权重
+        self.dawn_black_beast_preset = team_setting.dawn_black_beast_preset  # 黎明黑兽逐层主题包预设
         # 统计时间
         self.find_road_total_time = 0
         self.battle_total_time = 0
@@ -293,7 +303,13 @@ class Mirror:
                     if self.floor > 0:
                         self._enter_hard_mode_if_needed()
                         switch_theme_pack_difficulty(self.hard_mode)
-                select_theme_pack(self.hard_mode, self.floor, self.team_order, self.use_custom_theme_pack_weight)
+                select_theme_pack(
+                    self.hard_mode,
+                    self.floor,
+                    self.team_order,
+                    self.use_custom_theme_pack_weight,
+                    self.dawn_black_beast_preset,
+                )
                 if self.re_formation_each_floor:
                     self.first_battle = True
                 if new_floor:
@@ -467,7 +483,17 @@ class Mirror:
 
             # 选择奖励卡
             if auto.find_element("mirror/road_in_mir/select_encounter_reward_card_assets.png"):
-                if self.reward_cards:
+                if self.dawn_black_beast_preset and self.floor == 1:
+                    get_reward_card(
+                        self.reward_cards_select if self.reward_cards else 0,
+                        target_gifts=["成捆的符咒", "Talisman Bundle", "Bundle of Talismans"],
+                    )
+                elif self.dawn_black_beast_preset and self.floor == 2:
+                    get_reward_card(
+                        self.reward_cards_select if self.reward_cards else 0,
+                        target_gifts=["干巴柴涩鸡胸肉", "鸡胸肉", "Chicken Breast"],
+                    )
+                elif self.reward_cards:
                     get_reward_card(self.reward_cards_select)
                 else:
                     get_reward_card()
@@ -1256,6 +1282,18 @@ class Mirror:
             if auto.find_element("mirror/road_in_mir/legend_assets.png"):
                 break
 
+            # 黎明黑兽预设：第二层事件若直接显示鸡胸肉奖励，优先点击该奖励选项。
+            if self.dawn_black_beast_preset and self.floor == 2:
+                chicken_reward = auto.find_language_text(
+                    ["干巴柴涩鸡胸肉", "鸡胸肉"],
+                    ["Chicken Breast"],
+                )
+                if chicken_reward:
+                    auto.mouse_click(chicken_reward[0], chicken_reward[1])
+                    log.info("黎明黑兽预设：第二层事件识别到鸡胸肉奖励，优先选择")
+                    event_chance -= 1
+                    continue
+
             if event_chance == 0:
                 if key_word_position := auto.find_language_text("判定", "check"):
                     auto.mouse_action_with_pos(key_word_position, offset=False)
@@ -1298,7 +1336,7 @@ class Mirror:
                         auto.mouse_click(coordinate[0], coordinate[1])
                     retry()
 
-            # 针对不同事件进行处理，优先选???与直接获取的，再选需要判定的，再选后续事件的，最后第一个事项
+            # 针对不同事件进行处理，优先选直接获取的，再选需要判定的，再选后续事件的，最后第一个事项
             if auto.click_element("event/unknown_event.png"):
                 event_chance -= 1
                 continue

@@ -232,6 +232,7 @@ all_checkbox_config_name = [
     "skill_replacement",
     "ignore_shop",
     "use_custom_theme_pack_weight",
+    "dawn_black_beast_preset",
     "use_team_code",
     "observe_ego_gift",
 ]
