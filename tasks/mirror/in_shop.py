@@ -847,17 +847,20 @@ class Shop:
                     missing_level_III_targets = {
                         "干巴柴涩鸡胸肉", "雷击木"
                     } - self.dawn_black_beast_found
-                    if missing_level_III_targets and len(level_II) >= 3:
-                        # 三级目标（鸡胸肉、雷击木）由破裂体系随机产出，不指定素材配方。
-                        fusion_pos = level_II[:3]
-                        log.info("黎明黑兽预设：尝试随机合成破裂三级饰品，目标剩余：" + "、".join(sorted(missing_level_III_targets)))
+                    if missing_level_III_targets:
+                        # 先完成鸡胸肉、雷击木两个随机三级目标；素材不足时绝不消耗三级素材去做四级。
+                        if len(level_II) >= 3:
+                            fusion_pos = level_II[:3]
+                            log.info("黎明黑兽预设：尝试随机合成破裂三级饰品，目标剩余：" + "、".join(sorted(missing_level_III_targets)))
+                        else:
+                            log.debug("黎明黑兽预设：三级目标尚未齐全且II级素材不足3个，暂不消耗III级素材")
                     elif len(level_III) >= 3:
                         fusion_pos = level_III[:3]
                     elif len(level_III) >= 2 and len(level_II) >= 1:
                         fusion_pos = level_III[:2] + level_II[:1]
                     else:
                         log.debug(
-                            "黎明黑兽预设：当前素材不足，三级目标需3个II级素材；快感目标需3个III级或2个III级+1个II级素材"
+                            "黎明黑兽预设：快感目标素材不足，需要3个III级或2个III级+1个II级素材"
                         )
                 else:
                     if len(all_system_gift) > 0:
@@ -906,16 +909,14 @@ class Shop:
                                 self.dawn_black_beast_found.add(target_name)
                                 log.info(f"黎明黑兽预设：随机合成结果已识别目标饰品“{target_name}”")
                                 break
-                    target_enrapturing_trance = target_gift == "快感"
                     auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png")
                     sleep(0.5)
                     auto.click_element(
                         "mirror/road_in_mir/ego_gift_get_confirm_assets.png",
                         take_screenshot=True,
                     )
-                    if target_enrapturing_trance:
-                        log.info("黎明黑兽预设：已识别到目标四级破裂饰品“快感”")
-                        return
+                    if target_gift == "快感":
+                        log.info("黎明黑兽预设：已识别到目标四级破裂饰品“快感”；继续检查另外两件三级目标")
                     break
 
                 if auto.click_element(
