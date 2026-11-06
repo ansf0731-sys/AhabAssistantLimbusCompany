@@ -89,3 +89,24 @@ def test_dawn_black_beast_preset_switches_to_hard_mode_on_floor_five() -> None:
     assert ast.unparse(assignment.value) == (
         "5 if team_setting.dawn_black_beast_preset else team_setting.normal_to_hard_floor"
     )
+
+
+
+def test_rupture_random_fusion_preserves_tier_three_targets_before_tier_four() -> None:
+    shop_path = ROOT / "tasks" / "mirror" / "in_shop.py"
+    source = shop_path.read_text(encoding="utf-8")
+    assert "if missing_level_III_targets:" in source
+    assert "if len(level_II) >= 3:" in source
+    assert "暂不消耗III级素材" in source
+    assert "3个III级或2个III级+1个II级素材" in source
+    # 快感出现后仍应继续检查鸡胸肉与雷击木，不得提前结束体系合成。
+    result_block = source.split('if target_gift == "快感":', 1)[1].split("break", 1)[0]
+    assert "return" not in result_block
+
+
+def test_preset_attempts_enhancement_for_all_five_named_gifts() -> None:
+    shop_path = ROOT / "tasks" / "mirror" / "in_shop.py"
+    source = shop_path.read_text(encoding="utf-8")
+    for target in ("成捆的符咒", "标准负载电池", "干巴柴涩鸡胸肉", "雷击木", "快感"):
+        assert f'("{target}",' in source
+    assert "self.dawn_black_beast_enhanced.add(target_name)" in source
