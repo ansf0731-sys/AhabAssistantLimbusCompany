@@ -736,15 +736,17 @@ class Shop:
 
             fusion = False
             fusion_gift = None
-            # 如果找到能合成的公式饰品，则合成
-            for gift in system_gifts:
-                if pos := auto.find_element(gift):
-                    if pos[1] > dividing_line:
-                        continue
-                    auto.mouse_click(pos[0], pos[1])
-                    fusion = True
-                    fusion_gift = gift.split("_")[-1]
-                    break
+            # 普通队伍沿用仓库中的固定公式模板；攻略预设按游戏内破裂体系的通用等级规则合成，
+            # 不把某一组三件饰品误当作“快感”的固定配方。
+            if not self.dawn_black_beast_preset:
+                for gift in system_gifts:
+                    if pos := auto.find_element(gift):
+                        if pos[1] > dividing_line:
+                            continue
+                        auto.mouse_click(pos[0], pos[1])
+                        fusion = True
+                        fusion_gift = gift.split("_")[-1]
+                        break
 
             fusion_pos = []
             if not fusion:
@@ -753,15 +755,50 @@ class Shop:
                     find_type="image_with_multiple_targets",
                     take_screenshot=True,
                 )
-                if len(all_system_gift) > 0:
-                    for g in all_system_gift:
-                        if g[1] < dividing_line:
-                            fusion_pos.append(g)
+                if self.dawn_black_beast_preset:
+                    level_III = []
+                    level_II = []
+                    for gift_pos in all_system_gift:
+                        if gift_pos[1] >= dividing_line:
+                            continue
+                        # 等级徽记位于饰品卡片附近；用窄裁切避免把相邻卡片的等级算进来。
+                        gift_crop = (
+                            max(0, gift_pos[0] - 75),
+                            max(0, gift_pos[1] - 75),
+                            gift_pos[0] + 75,
+                            gift_pos[1] + 75,
+                        )
+                        if auto.find_element(
+                            "mirror/road_to_mir/observe_ego_gift/Level_III.png",
+                            my_crop=gift_crop,
+                            threshold=0.72,
+                        ):
+                            level_III.append(gift_pos)
+                        elif auto.find_element(
+                            "mirror/road_to_mir/observe_ego_gift/Level_II.png",
+                            my_crop=gift_crop,
+                            threshold=0.72,
+                        ):
+                            level_II.append(gift_pos)
+                    level_III.sort(key=lambda pos: (pos[1], pos[0]))
+                    level_II.sort(key=lambda pos: (pos[1], pos[0]))
+                    if len(level_III) >= 3:
+                        fusion_pos = level_III[:3]
+                    elif len(level_III) >= 2 and len(level_II) >= 1:
+                        fusion_pos = level_III[:2] + level_II[:1]
+                    else:
+                        log.debug(
+                            "黎明黑兽预设：破裂体系可用素材不足，需3个III级或2个III级+1个II级饰品"
+                        )
+                else:
+                    if len(all_system_gift) > 0:
+                        for gift_pos in all_system_gift:
+                            if gift_pos[1] < dividing_line:
+                                fusion_pos.append(gift_pos)
                 if len(fusion_pos) == 0:
                     auto.mouse_click_blank(times=3)
                     return
-                else:
-                    fusion = True
+                fusion = True
 
             if len(fusion_pos) > 0 and fusion_gift is None:
                 pos = fusion_pos.pop(0)
@@ -787,6 +824,10 @@ class Shop:
                 auto.mouse_to_blank()
 
                 if auto.click_element("mirror/road_in_mir/ego_gift_get_confirm_assets.png"):
+                    if self.dawn_black_beast_preset and auto.find_language_text(
+                        ["快感"], ["Enrapturing Trance"], all_text=True
+                    ):
+                        log.info("黎明黑兽预设：已识别到目标四级破裂饰品“快感”")
                     break
 
                 if auto.click_element(
